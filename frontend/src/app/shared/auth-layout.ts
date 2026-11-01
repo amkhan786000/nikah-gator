@@ -7,24 +7,24 @@ import { Component, input } from '@angular/core';
     <div class="auth">
       <section class="auth-hero">
         <div class="app-brand" style="padding:0;border:0">
-          <span class="brand-mark">ng</span>
-          <span class="brand-text"><strong>Nikah Gator</strong><small>Nikah records for masjids</small></span>
+          <img class="brand-logo" src="assets/icons/favicon.svg" alt="" />
+          <span class="brand-text"><strong>Masjidly</strong><small>Services for your masjid</small></span>
         </div>
         <div>
-          <h1>Every nikah, <span>recorded with care.</span></h1>
-          <p>Nikah Gator helps your imam register nikahs, keep the records of your masjid in one place, and print the
-             certificate for the couple.</p>
+          <h1>Your masjid, <span>served with care.</span></h1>
+          <p>Masjidly helps your imam register nikahs, issue certificates and letters, and keep the records of your
+             masjid in one place.</p>
           <div class="auth-points">
             <div><i class="mdi mdi-book-open-page-variant"></i>Nikah records</div>
-            <div><i class="mdi mdi-certificate-outline"></i>Certificates</div>
+            <div><i class="mdi mdi-certificate-outline"></i>Certificates &amp; letters</div>
             <div><i class="mdi mdi-home-city-outline"></i>Your masjid</div>
           </div>
         </div>
-        <small>© {{ year }} Nikah Gator</small>
+        <small>© {{ year }} Masjidly</small>
       </section>
       <section class="auth-panel">
         <div class="auth-card">
-          <div class="auth-mobile-brand"><span class="brand-mark">ng</span>Nikah Gator</div>
+          <div class="auth-mobile-brand"><img class="brand-logo" src="assets/icons/favicon.svg" alt="" />Masjidly</div>
           <h2>{{ heading() }}</h2>
           @if (subheading()) { <p class="auth-sub">{{ subheading() }}</p> }
           <ng-content />

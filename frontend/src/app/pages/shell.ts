@@ -14,8 +14,8 @@ interface NavLink { path: string; label: string; icon: string }
     <div class="app" [class.app--collapsed]="collapsed()" [class.app--mobile-open]="mobileOpen()">
       <aside class="app-sidebar no-print">
         <a class="app-brand" routerLink="/" (click)="mobileOpen.set(false)">
-          <span class="brand-mark">ng</span>
-          <span class="brand-text"><strong>Nikah Gator</strong><small>{{ auth.me()?.masjidName || 'Platform admin' }}</small></span>
+          <img class="brand-logo" src="assets/icons/favicon.svg" alt="" />
+          <span class="brand-text"><strong>Masjidly</strong><small>{{ auth.me()?.masjidName || 'Platform admin' }}</small></span>
         </a>
         <nav class="app-nav">
           <div class="nav-section">{{ auth.me()?.role === 'PLATFORM_ADMIN' ? 'Administration' : 'Imam' }}</div>
@@ -26,14 +26,14 @@ interface NavLink { path: string; label: string; icon: string }
             </a>
           }
         </nav>
-        <div class="sidebar-foot">Nikah records for your masjid</div>
+        <div class="sidebar-foot">Services for your masjid</div>
       </aside>
       <div class="app-backdrop no-print" (click)="mobileOpen.set(false)"></div>
 
       <div class="app-main">
         <header class="app-topbar no-print">
           <button type="button" class="icon-btn" (click)="toggleSidebar()" aria-label="Toggle menu"><i class="mdi mdi-menu"></i></button>
-          <div class="topbar-crumbs"><small>{{ auth.me()?.masjidName || 'Nikah Gator' }}</small><strong>{{ label() }}</strong></div>
+          <div class="topbar-crumbs"><small>{{ auth.me()?.masjidName || 'Masjidly' }}</small><strong>{{ label() }}</strong></div>
           <div class="topbar-right">
             <div class="user-wrap" (click)="$event.stopPropagation()">
               <div class="user-chip" role="button" tabindex="0" (click)="menuOpen.set(!menuOpen())" (keydown.enter)="menuOpen.set(!menuOpen())">
@@ -53,7 +53,7 @@ interface NavLink { path: string; label: string; icon: string }
         </header>
 
         <main class="app-content"><router-outlet /></main>
-        <footer class="app-footer no-print"><span>© {{ year }} Nikah Gator</span></footer>
+        <footer class="app-footer no-print"><span>© {{ year }} Masjidly</span></footer>
       </div>
     </div>
   `,

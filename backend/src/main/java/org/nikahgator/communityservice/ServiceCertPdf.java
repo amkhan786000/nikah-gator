@@ -35,7 +35,7 @@ final class ServiceCertPdf {
             PdfWriter writer = PdfWriter.getInstance(doc, out);
             writer.setPageEvent(new Footer(c));
             doc.addTitle("Community service certificate " + c.getCertNumber());
-            doc.addCreator("Nikah Gator");
+            doc.addCreator("Masjidly");
             doc.open();
             Letterhead.write(doc, head);
 

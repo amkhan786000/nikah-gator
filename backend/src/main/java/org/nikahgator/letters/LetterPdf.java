@@ -37,7 +37,7 @@ public final class LetterPdf {
             Color accent = color(h.accentColor());
             writer.setPageEvent(new Footer(l, accent));
             doc.addTitle("Letter " + l.getLetterNumber());
-            doc.addCreator("Nikah Gator");
+            doc.addCreator("Masjidly");
             doc.open();
 
             Font name = new Font(Font.TIMES_ROMAN, 20, Font.BOLD, accent);

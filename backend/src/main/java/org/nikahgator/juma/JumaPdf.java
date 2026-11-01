@@ -32,7 +32,7 @@ final class JumaPdf {
             PdfWriter writer = PdfWriter.getInstance(doc, out);
             if (JumaLetter.VOID.equals(l.getStatus())) writer.setPageEvent(new VoidMark());
             doc.addTitle("Juma letter - " + l.getSchoolName());
-            doc.addCreator("Nikah Gator");
+            doc.addCreator("Masjidly");
             doc.open();
             Letterhead.write(doc, head);
 

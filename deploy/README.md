@@ -1,4 +1,4 @@
-# Deploying Nikah Gator to Contabo
+# Deploying Masjidly to Contabo
 
 Same flow as `ba`.
 

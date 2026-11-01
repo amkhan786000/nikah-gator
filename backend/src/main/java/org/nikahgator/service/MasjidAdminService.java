@@ -125,10 +125,10 @@ public class MasjidAdminService {
             log.warn("LOG_OTP is on: temporary password for {} is {}", imam.getEmail(), password);
         }
         String site = siteUrl == null || siteUrl.isBlank() ? "" : "\nSign in at: " + siteUrl;
-        return email.send(imam.getEmail(), "Your Nikah Gator account for " + masjid.getName(),
+        return email.send(imam.getEmail(), "Your Masjidly account for " + masjid.getName(),
                 "Assalamu alaikum " + imam.getFullName() + ",\n\n"
                         + (welcome ? "An account was created for you to manage nikah records for " + masjid.getName() + "."
-                                   : "A new temporary password was issued for your Nikah Gator account.")
+                                   : "A new temporary password was issued for your Masjidly account.")
                         + site + "\n\nE-mail: " + imam.getEmail() + "\nTemporary password: " + password
                         + "\n\nWhen you sign in you will get a code by e-mail, and you must then choose a new password.",
                 password);

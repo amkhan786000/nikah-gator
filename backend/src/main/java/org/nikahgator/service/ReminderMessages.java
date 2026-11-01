@@ -40,7 +40,7 @@ public final class ReminderMessages {
                         + "Couple: " + n.getGroomName() + " and " + n.getBrideName() + "\n"
                         + "When: " + when
                         + (phones.isEmpty() ? "" : "\nCouple's phone: " + phones)
-                        + "\n\nMay Allah make it easy.\n\nNikah Gator");
+                        + "\n\nMay Allah make it easy.\n\nMasjidly");
     }
 
     public static Message adminMasjidCreated(String masjidName, String imamName, String imamEmail) {

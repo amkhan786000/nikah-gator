@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Nikah Gator design system (same as Rahbar)
+   Masjidly design system (same as Rahbar)
    Sits on top of the Adminto / Bootstrap 4 theme (index.html) and restyles it:
    brand colours from the Bihar Anjuman logo, Plus Jakarta Sans, soft cards,
    calm tables and a dark sidebar shell (shared/layout/shell.component.ts).
@@ -97,6 +97,7 @@ a:hover { color: var(--brand-700); text-decoration: none; }
   background: #fff; color: var(--brand); font-weight: 800; font-size: 17px; letter-spacing: -.04em;
   box-shadow: 0 6px 16px -6px rgba(156, 204, 61, .7);
 }
+.brand-logo { flex: 0 0 38px; width: 38px; height: 38px; border-radius: 12px; box-shadow: 0 6px 16px -6px rgba(156, 204, 61, .7); }
 .brand-text { display: flex; flex-direction: column; line-height: 1.15; }
 .brand-text strong { font-size: 17px; font-weight: 800; letter-spacing: -.01em; }
 .brand-text small { font-size: 11px; color: var(--side-muted); letter-spacing: .02em; }
@@ -248,7 +249,8 @@ a:hover { color: var(--brand-700); text-decoration: none; }
     display: block; position: fixed; inset: 0; z-index: 1035;
     background: rgba(10, 20, 15, .45); backdrop-filter: blur(2px);
   }
-  .app--collapsed .brand-text { display: flex; }
+  .app--collapsed .brand-logo { flex: 0 0 38px; width: 38px; height: 38px; border-radius: 12px; box-shadow: 0 6px 16px -6px rgba(156, 204, 61, .7); }
+.brand-text { display: flex; }
   .app--collapsed .nav-item span, .app--collapsed .sidebar-foot { display: block; }
   .app--collapsed .nav-section { visibility: visible; height: auto; padding: 0 12px 10px; }
   .app--collapsed .nav-item { justify-content: flex-start; padding: 10px 12px; }
@@ -557,7 +559,7 @@ hr { border-top-color: var(--line); }
     display: flex; align-items: center; gap: 10px; justify-content: center; margin-bottom: 20px;
     font-weight: 800; font-size: 18px; color: var(--ink);
   }
-  .auth-mobile-brand .brand-mark { box-shadow: none; background: var(--brand); color: #fff; }
+  .auth-mobile-brand .brand-logo { box-shadow: none; }
   .auth-card { padding: 28px 22px; }
 }
 

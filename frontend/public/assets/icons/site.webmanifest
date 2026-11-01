@@ -1,7 +1,7 @@
 {
-  "name": "Nikah Gator",
-  "short_name": "Nikah Gator",
-  "description": "Nikah records for your masjid",
+  "name": "Masjidly",
+  "short_name": "Masjidly",
+  "description": "Services for your masjid",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f1d16",
