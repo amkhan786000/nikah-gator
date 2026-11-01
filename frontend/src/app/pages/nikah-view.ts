@@ -6,10 +6,11 @@ import { AuthService, errorMessage } from '../core/auth.service';
 import { Nikah } from './nikah.model';
 import { NikahDocuments } from './nikah-documents';
 import { NikahNotifications } from './nikah-notifications';
+import { NikahPayments } from './nikah-payments';
 
 @Component({
   selector: 'app-nikah-view',
-  imports: [RouterLink, DatePipe, NikahDocuments, NikahNotifications],
+  imports: [RouterLink, DatePipe, NikahDocuments, NikahNotifications, NikahPayments],
   template: `
     @if (error()) { <div class="alert alert-danger">{{ error() }}</div> }
     @if (n(); as n) {
@@ -58,6 +59,9 @@ import { NikahNotifications } from './nikah-notifications';
       <!-- feature:documents -->
       <app-nikah-documents [nikahId]="n.id!" />
       <!-- /feature:documents -->
+      <!-- feature:payments -->
+      <app-nikah-payments [nikahId]="n.id!" />
+      <!-- /feature:payments -->
       <!-- feature:notifications -->
       <app-nikah-notifications [nikahId]="n.id!" [refresh]="n.status + n.nikahAt" />
       <!-- /feature:notifications -->

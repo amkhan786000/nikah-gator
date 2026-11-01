@@ -35,6 +35,16 @@ export const routes: Routes = [
         canActivate: [roleGuard('IMAM')],
         loadComponent: () => import('./pages/nikah-view').then((m) => m.NikahView),
       },
+      {
+        path: 'imam/nikahs/:id/payments/:pid/receipt',
+        canActivate: [roleGuard('IMAM')],
+        loadComponent: () => import('./pages/payment-receipt').then((m) => m.PaymentReceipt),
+      },
+      {
+        path: 'imam/settings',
+        canActivate: [roleGuard('IMAM')],
+        loadComponent: () => import('./pages/masjid-settings').then((m) => m.MasjidSettingsPage),
+      },
       { path: '', pathMatch: 'full', loadComponent: () => import('./pages/home-redirect').then((m) => m.HomeRedirect) },
     ],
   },
