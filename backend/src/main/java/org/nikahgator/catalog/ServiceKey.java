@@ -20,13 +20,13 @@ public enum ServiceKey {
             "Certificates of service hours for students and volunteers.", "mdi-hand-heart", true, false),
     // ---
     JANAZAH("janazah", "Janazah (funeral) records",
-            "Record funeral prayers and issue a letter for the family.", "mdi-flower-outline", true, false),
+            "Record funeral prayers and issue a letter for the family.", "mdi-flower-outline", true, true),
     // ---
     SHAHADA("shahada", "New Muslim (Shahada) certificates",
-            "Certificate for someone who has taken their shahada.", "mdi-star-circle", true, false),
+            "Certificate for someone who has taken their shahada.", "mdi-star-circle", true, true),
     // ---
     BABY_NAMING("baby-naming", "Baby naming & Aqeeqah",
-            "Certificate for a baby's naming and aqeeqah.", "mdi-baby-face-outline", true, false),
+            "Certificate for a baby's naming and aqeeqah.", "mdi-baby-face-outline", true, true),
     // ---
     COUNSELING("counseling", "Counseling sessions",
             "Private log of marriage, family and personal counseling sessions.", "mdi-account-heart-outline", true, false),
