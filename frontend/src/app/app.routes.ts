@@ -191,6 +191,27 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/svc/letters/letter-editor').then((m) => m.LetterEditor),
       },
       //
+      {
+        path: 'imam/svc/divorce',
+        canActivate: [roleGuard('IMAM'), serviceGuard('DIVORCE')],
+        loadComponent: () => import('./pages/svc/divorce/divorce-list').then((m) => m.DivorceList),
+      },
+      {
+        path: 'imam/svc/divorce/new',
+        canActivate: [roleGuard('IMAM'), serviceGuard('DIVORCE')],
+        loadComponent: () => import('./pages/svc/divorce/divorce-form').then((m) => m.DivorceForm),
+      },
+      {
+        path: 'imam/svc/divorce/:id/edit',
+        canActivate: [roleGuard('IMAM'), serviceGuard('DIVORCE')],
+        loadComponent: () => import('./pages/svc/divorce/divorce-form').then((m) => m.DivorceForm),
+      },
+      {
+        path: 'imam/svc/divorce/:id',
+        canActivate: [roleGuard('IMAM'), serviceGuard('DIVORCE')],
+        loadComponent: () => import('./pages/svc/divorce/divorce-view').then((m) => m.DivorceView),
+      },
+      //
       { path: '', pathMatch: 'full', loadComponent: () => import('./pages/home-redirect').then((m) => m.HomeRedirect) },
     ],
   },

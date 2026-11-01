@@ -8,10 +8,11 @@ import { NikahCertificate } from './nikah-certificate';
 import { NikahDocuments } from './nikah-documents';
 import { NikahNotifications } from './nikah-notifications';
 import { NikahPayments } from './nikah-payments';
+import { NikahDivorceNote } from './svc/divorce/nikah-divorce-note';
 
 @Component({
   selector: 'app-nikah-view',
-  imports: [RouterLink, DatePipe, NikahCertificate, NikahDocuments, NikahNotifications, NikahPayments],
+  imports: [RouterLink, DatePipe, NikahCertificate, NikahDocuments, NikahNotifications, NikahPayments, NikahDivorceNote],
   template: `
     @if (error()) { <div class="alert alert-danger">{{ error() }}</div> }
     @if (n(); as n) {
@@ -46,6 +47,9 @@ import { NikahPayments } from './nikah-payments';
       <!-- feature:notifications -->
       <app-nikah-notifications [nikahId]="n.id!" [refresh]="n.status + n.nikahAt" />
       <!-- /feature:notifications -->
+      <!-- feature:divorce -->
+      <app-nikah-divorce-note [nikahId]="n.id!" />
+      <!-- /feature:divorce -->
     }
   `,
 })
