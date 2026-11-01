@@ -22,7 +22,7 @@ public enum ServiceKey {
     JANAZAH("janazah", "Janazah (funeral) records",
             "Record funeral prayers and issue a letter for the family.", "mdi-flower-outline", true, true),
     // ---
-    SHAHADA("shahada", "New Muslim (Shahada) certificates",
+    SHAHADA("shahada", "Shahada certificates",
             "Certificate for someone who has taken their shahada.", "mdi-star-circle", true, true),
     // ---
     BABY_NAMING("baby-naming", "Baby naming & Aqeeqah",

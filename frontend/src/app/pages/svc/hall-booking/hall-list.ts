@@ -12,7 +12,7 @@ import { HallBooking, hallBadge } from './hall.model';
   template: `
     <div class="page-title-box no-print d-flex flex-wrap align-items-center justify-content-between">
       <h4 class="page-title">Hall &amp; event bookings</h4>
-      <div class="d-flex flex-wrap" style="gap:.4rem">
+      <div class="title-actions">
         <button class="btn btn-secondary btn-responsive" (click)="print()"><i class="mdi mdi-printer"></i> Print</button>
         <a class="btn btn-primary btn-responsive" routerLink="/imam/svc/hall-booking/new"><i class="mdi mdi-plus"></i> New booking</a>
       </div>
