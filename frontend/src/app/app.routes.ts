@@ -61,6 +61,23 @@ export const routes: Routes = [
         canActivate: [roleGuard('IMAM'), serviceGuard('NIKAH')],
         loadComponent: () => import('./pages/certificate-designer').then((m) => m.CertificateDesigner),
       },
+      // Each service adds its own routes by replacing its anchor line below (path 'imam/svc/<slug>', serviceGuard).
+      // svc-route:juma
+      //
+      // svc-route:community-service
+      //
+      // svc-route:janazah
+      //
+      // svc-route:shahada
+      //
+      // svc-route:baby-naming
+      //
+      // svc-route:counseling
+      //
+      // svc-route:hall-booking
+      //
+      // svc-route:letters
+      //
       { path: '', pathMatch: 'full', loadComponent: () => import('./pages/home-redirect').then((m) => m.HomeRedirect) },
     ],
   },
