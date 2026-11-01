@@ -108,6 +108,14 @@ public class ChecklistService {
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Checklist item not found"));
     }
 
+    /** A standard item by its code (creates the default list first if needed). */
+    @Transactional
+    public ChecklistItem findByCode(AppUser imam, Long nikahId, String code) {
+        nikahOf(imam, nikahId);
+        return ensure(nikahId).stream().filter(i -> !i.isCustom() && i.getCode().equals(code)).findFirst()
+                .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST, "Unknown checklist item"));
+    }
+
     /** done/total of required items for every nikah of the imam's masjid (a nikah with no list yet counts the defaults). */
     @Transactional(readOnly = true)
     public List<Progress> progress(AppUser imam) {

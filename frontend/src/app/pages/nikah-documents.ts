@@ -38,6 +38,12 @@ const MAX_BYTES = 25 * 1024 * 1024;
         </span>
       </div>
       @if (error()) { <div class="alert alert-danger">{{ error() }}</div> }
+      @if (failedUploads().length) {
+        <div class="alert alert-warning">
+          These files could not be uploaded. Please attach them again below:
+          <ul class="mb-0 pl-3">@for (f of failedUploads(); track f) { <li style="word-break:break-word">{{ f }}</li> }</ul>
+        </div>
+      }
 
       @for (i of items(); track i.id) {
         <div class="chk-item py-2" [class.text-muted]="!i.required">
@@ -115,6 +121,8 @@ export class NikahDocuments implements OnInit {
   newLabel = signal('');
   error = signal('');
   busy = signal(false);
+  /** Files that failed to upload right after the nikah was registered (passed along in the router state). */
+  failedUploads = signal<string[]>(history.state?.failedUploads ?? []);
 
   progress = computed(() => {
     const req = this.items().filter((i) => i.required);
