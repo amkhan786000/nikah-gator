@@ -4,10 +4,11 @@ import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService, errorMessage } from '../core/auth.service';
 import { Nikah } from './nikah.model';
+import { NikahCertificate } from './nikah-certificate';
 
 @Component({
   selector: 'app-nikah-view',
-  imports: [RouterLink, DatePipe],
+  imports: [RouterLink, DatePipe, NikahCertificate],
   template: `
     @if (error()) { <div class="alert alert-danger">{{ error() }}</div> }
     @if (n(); as n) {
@@ -17,30 +18,7 @@ import { Nikah } from './nikah.model';
           <a class="btn btn-secondary" [routerLink]="['/imam/nikahs', n.id, 'edit']"><i class="mdi mdi-pencil"></i> Edit</a>
           <button class="btn btn-secondary" (click)="setStatus('COMPLETED')" [disabled]="n.status === 'COMPLETED'">Mark completed</button>
           <button class="btn btn-secondary" (click)="setStatus('CANCELLED')" [disabled]="n.status === 'CANCELLED'">Cancel nikah</button>
-          <button class="btn btn-primary" (click)="print()"><i class="mdi mdi-printer"></i> Print certificate</button>
         </div>
-      </div>
-
-      <div class="certificate">
-        <p class="bismillah">بسم الله الرحمن الرحيم</p>
-        <h1>Nikah Certificate</h1>
-        <p class="center">{{ auth.me()?.masjidName }}<br /><small>{{ auth.me()?.masjidAddress }}</small></p>
-        <p>This is to certify that the marriage (<em>nikah</em>) of</p>
-        <p class="names"><strong>{{ n.groomName }}</strong>@if (n.groomFatherName) { <small> son of {{ n.groomFatherName }}</small> }</p>
-        <p>with</p>
-        <p class="names"><strong>{{ n.brideName }}</strong>@if (n.brideFatherName) { <small> daughter of {{ n.brideFatherName }}</small> }</p>
-        <p>was solemnized according to the Islamic rites on <strong>{{ n.nikahAt | date: 'fullDate' }}</strong> at {{ n.nikahAt | date: 'shortTime' }}@if (n.mahrDescription) { , with mahr: <strong>{{ n.mahrDescription }}</strong> }.</p>
-        @if (n.waliName || n.witness1Name || n.witness2Name) {
-          <p><small>
-            @if (n.waliName) { Wali: {{ n.waliName }}@if (n.waliRelation) { ({{ n.waliRelation }}) }. }
-            @if (n.witness1Name || n.witness2Name) { Witnesses: {{ witnesses(n) }}. }
-          </small></p>
-        }
-        <div class="signatures">
-          <div><span class="line"></span>Imam / Officiant<br />{{ auth.me()?.name }}</div>
-          <div><span class="line"></span>Date</div>
-        </div>
-        <p><small>Record no. {{ n.id }}</small></p>
       </div>
 
       <div class="card no-print"><div class="card-body">
@@ -53,6 +31,10 @@ import { Nikah } from './nikah.model';
           <div><span>Notes</span><strong>{{ n.notes || '—' }}</strong></div>
         </div>
       </div></div>
+
+      <!-- feature:certificates -->
+      <app-nikah-certificate [nikahId]="n.id!" [status]="n.status ?? ''" />
+      <!-- /feature:certificates -->
     }
   `,
 })
@@ -78,13 +60,5 @@ export class NikahView {
       next: (r) => this.n.set(r),
       error: (e) => this.error.set(errorMessage(e)),
     });
-  }
-
-  witnesses(n: Nikah): string {
-    return [n.witness1Name, n.witness2Name].filter((w) => !!w).join(' and ');
-  }
-
-  print() {
-    window.print();
   }
 }

@@ -4,6 +4,7 @@ import { authGuard, guestGuard, roleGuard } from './core/guards';
 export const routes: Routes = [
   { path: 'login', canActivate: [guestGuard], loadComponent: () => import('./pages/login').then((m) => m.Login) },
   { path: 'forgot-password', canActivate: [guestGuard], loadComponent: () => import('./pages/forgot-password').then((m) => m.ForgotPassword) },
+  { path: 'verify/:number', loadComponent: () => import('./pages/verify-certificate').then((m) => m.VerifyCertificate) },
   {
     path: '',
     canActivate: [authGuard],
