@@ -72,7 +72,10 @@ export class AuthService {
   changePassword(currentPassword: string, newPassword: string, confirmPassword: string) {
     return this.http
       .post<{ message: string }>('/api/auth/change-password', { currentPassword, newPassword, confirmPassword })
-      .pipe(tap(() => this.me.update((m) => (m ? { ...m, mustChangePassword: false } : m))));
+      .pipe(tap(() => {
+        this.catalog.clear();
+        this.me.update((m) => (m ? { ...m, mustChangePassword: false } : m));
+      }));
   }
 
   loadMe(): Observable<Me> {

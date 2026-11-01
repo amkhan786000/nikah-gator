@@ -113,6 +113,7 @@ a:hover { color: var(--brand-700); text-decoration: none; }
   color: var(--side-text); font-weight: 500; white-space: nowrap;
   transition: background .15s ease, color .15s ease;
 }
+.nav-item span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nav-item i { font-size: 20px; line-height: 1; width: 22px; text-align: center; flex: 0 0 22px; opacity: .85; }
 .nav-item:hover { background: rgba(255, 255, 255, .06); color: #fff; }
 .nav-item.active { background: rgba(156, 204, 61, .14); color: #fff; font-weight: 600; }
@@ -488,6 +489,8 @@ hr { border-top-color: var(--line); }
 .profile-icon .mdi { font-size: 64px; line-height: 1; }
 
 .btn-responsive { white-space: nowrap; }
+.title-actions { display: flex; flex-wrap: wrap; gap: .4rem; }
+@media (max-width: 575.98px) { .title-actions { width: 100%; } .title-actions .btn { flex: 1 1 100%; } }
 @media (max-width: 575.98px) { .btn-responsive { width: 100%; } }
 
 /* ------------------------------------------------------------------ auth pages (shared/auth-layout) */

@@ -1,4 +1,4 @@
-import { Component, HostListener, inject, signal } from '@angular/core';
+import { Component, HostListener, effect, inject, signal, untracked } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 import { AuthService } from '../core/auth.service';
@@ -75,7 +75,14 @@ export class Shell {
       this.label.set(this.labelFor(this.router.url));
     });
     this.label.set(this.labelFor(this.router.url));
-    if (this.auth.me()?.role === 'IMAM') this.catalog.load(true).subscribe({ error: () => this.catalog.services.set([]) });
+    // The imam's menu comes from the catalog. It loads once the profile is known and the password is no longer
+    // a temporary one (the API refuses everything else), and again after the catalog is cleared.
+    effect(() => {
+      const me = this.auth.me();
+      if (me?.role === 'IMAM' && !me.mustChangePassword && this.catalog.services() === null) {
+        untracked(() => this.catalog.load(true).subscribe({ error: () => undefined }));
+      }
+    });
   }
 
   @HostListener('document:click')
@@ -122,6 +129,8 @@ export class Shell {
     if (u.startsWith('/admin/masjids/') && u.endsWith('/services')) return 'Services';
     if (u.startsWith('/admin/masjids')) return 'Masjids';
     if (u.startsWith('/imam/not-available')) return 'Not available';
+    const svc = /^\/imam\/svc\/([^/]+)/.exec(u);
+    if (svc) return this.catalog.services()?.find((x) => x.slug === svc[1])?.label ?? '';
     if (u.startsWith('/imam/settings')) return 'Masjid settings';
     if (u.endsWith('/new')) return 'Register nikah';
     if (u.endsWith('/edit')) return 'Edit nikah';
