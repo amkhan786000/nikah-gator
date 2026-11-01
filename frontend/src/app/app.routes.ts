@@ -35,6 +35,11 @@ export const routes: Routes = [
         canActivate: [roleGuard('IMAM')],
         loadComponent: () => import('./pages/nikah-view').then((m) => m.NikahView),
       },
+      {
+        path: 'imam/certificate-design',
+        canActivate: [roleGuard('IMAM')],
+        loadComponent: () => import('./pages/certificate-designer').then((m) => m.CertificateDesigner),
+      },
       { path: '', pathMatch: 'full', loadComponent: () => import('./pages/home-redirect').then((m) => m.HomeRedirect) },
     ],
   },

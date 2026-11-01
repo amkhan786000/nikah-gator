@@ -83,7 +83,10 @@ export class Shell {
   links(): NavLink[] {
     return this.auth.me()?.role === 'PLATFORM_ADMIN'
       ? [{ path: '/admin/masjids', label: 'Masjids', icon: 'mdi-home-city-outline' }]
-      : [{ path: '/imam/nikahs', label: 'Nikahs', icon: 'mdi-book-open-page-variant' }];
+      : [
+          { path: '/imam/nikahs', label: 'Nikahs', icon: 'mdi-book-open-page-variant' },
+          { path: '/imam/certificate-design', label: 'Certificate design', icon: 'mdi-certificate-outline' },
+        ];
   }
 
   roleLabel(): string {
@@ -106,6 +109,7 @@ export class Shell {
     if (u.endsWith('/edit')) return 'Edit nikah';
     if (u.startsWith('/imam/nikahs/')) return 'Nikah';
     if (u.startsWith('/imam/nikahs')) return 'Nikahs';
+    if (u.startsWith('/imam/certificate-design')) return 'Certificate design';
     if (u.startsWith('/change-password')) return 'Change password';
     return '';
   }
