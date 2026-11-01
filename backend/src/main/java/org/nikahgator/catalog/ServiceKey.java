@@ -29,10 +29,10 @@ public enum ServiceKey {
             "Certificate for a baby's naming and aqeeqah.", "mdi-baby-face-outline", true, false),
     // ---
     COUNSELING("counseling", "Counseling sessions",
-            "Private log of marriage, family and personal counseling sessions.", "mdi-account-heart-outline", true, false),
+            "Private log of marriage, family and personal counseling sessions.", "mdi-account-heart-outline", true, true),
     // ---
     HALL_BOOKING("hall-booking", "Hall & event booking",
-            "Bookings of the masjid hall and events, without double-booking.", "mdi-calendar-check-outline", true, false),
+            "Bookings of the masjid hall and events, without double-booking.", "mdi-calendar-check-outline", true, true),
     // ---
     GENERAL_LETTER("letters", "General letters",
             "Character references, no-objection and other letters on masjid letterhead.", "mdi-email-newsletter", true, false);
