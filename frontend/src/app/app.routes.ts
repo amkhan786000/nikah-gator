@@ -72,9 +72,42 @@ export const routes: Routes = [
       //
       // svc-route:baby-naming
       //
-      // svc-route:counseling
+      {
+        path: 'imam/svc/counseling',
+        canActivate: [roleGuard('IMAM'), serviceGuard('COUNSELING')],
+        loadComponent: () => import('./pages/svc/counseling/counseling-list').then((m) => m.CounselingList),
+      },
+      {
+        path: 'imam/svc/counseling/new',
+        canActivate: [roleGuard('IMAM'), serviceGuard('COUNSELING')],
+        loadComponent: () => import('./pages/svc/counseling/counseling-form').then((m) => m.CounselingForm),
+      },
+      {
+        path: 'imam/svc/counseling/:id/edit',
+        canActivate: [roleGuard('IMAM'), serviceGuard('COUNSELING')],
+        loadComponent: () => import('./pages/svc/counseling/counseling-form').then((m) => m.CounselingForm),
+      },
+      {
+        path: 'imam/svc/counseling/:id',
+        canActivate: [roleGuard('IMAM'), serviceGuard('COUNSELING')],
+        loadComponent: () => import('./pages/svc/counseling/counseling-view').then((m) => m.CounselingView),
+      },
       //
-      // svc-route:hall-booking
+      {
+        path: 'imam/svc/hall-booking',
+        canActivate: [roleGuard('IMAM'), serviceGuard('HALL_BOOKING')],
+        loadComponent: () => import('./pages/svc/hall-booking/hall-list').then((m) => m.HallList),
+      },
+      {
+        path: 'imam/svc/hall-booking/new',
+        canActivate: [roleGuard('IMAM'), serviceGuard('HALL_BOOKING')],
+        loadComponent: () => import('./pages/svc/hall-booking/hall-form').then((m) => m.HallForm),
+      },
+      {
+        path: 'imam/svc/hall-booking/:id/edit',
+        canActivate: [roleGuard('IMAM'), serviceGuard('HALL_BOOKING')],
+        loadComponent: () => import('./pages/svc/hall-booking/hall-form').then((m) => m.HallForm),
+      },
       //
       {
         path: 'imam/svc/letters',
