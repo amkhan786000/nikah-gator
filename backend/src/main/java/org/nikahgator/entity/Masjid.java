@@ -30,6 +30,9 @@ public class Masjid {
     @Column(name = "nikah_fee_cents")
     private int nikahFeeCents;
 
+    @Column(name = "suggested_donation_cents")
+    private int suggestedDonationCents;
+
     private boolean active = true;
 
     @Column(name = "created_at", insertable = false, updatable = false)
