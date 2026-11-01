@@ -9,7 +9,7 @@ import { AuthLayout } from '../shared/auth-layout';
   imports: [FormsModule, RouterLink, AuthLayout],
   template: `
     <app-auth-layout [heading]="step() === 'password' ? 'Welcome back' : 'Check your email'"
-      [subheading]="step() === 'password' ? 'Sign in to manage your masjid’s nikah records.' : (info() || 'Enter the 6-digit code we emailed you.')">
+      [subheading]="step() === 'password' ? 'Sign in to manage your masjid.' : (info() || 'Enter the 6-digit code we emailed you.')">
       @if (error()) { <div class="alert alert-danger">{{ error() }}</div> }
 
       @if (step() === 'password') {

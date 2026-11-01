@@ -7,7 +7,7 @@ import { Component } from '@angular/core';
     <div class="card"><div class="card-body text-center py-5">
       <i class="mdi mdi-lock-outline" style="font-size:42px"></i>
       <p class="mt-2 mb-1"><strong>This service is not enabled for your masjid.</strong></p>
-      <p class="text-muted mb-0">Ask the Nikah Gator administrator to turn it on.</p>
+      <p class="text-muted mb-0">Ask the Masjidly administrator to turn it on.</p>
     </div></div>
   `,
 })

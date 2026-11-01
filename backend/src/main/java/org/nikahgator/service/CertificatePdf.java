@@ -65,7 +65,7 @@ public final class CertificatePdf {
             Color accent = color(c.accentColor());
             writer.setPageEvent(new Frame(cert, verifyUrl, accent));
             doc.addTitle("Nikah certificate " + cert.getCertNumber());
-            doc.addCreator("Nikah Gator");
+            doc.addCreator("Masjidly");
             doc.open();
 
             Font title = new Font(Font.TIMES_ROMAN, 32, Font.BOLD, accent);

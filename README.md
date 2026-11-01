@@ -1,6 +1,6 @@
-# Nikah Gator
+# Masjidly
 
-Manage nikah (Islamic marriage) requests, scheduling, documents and certificates for masjids in the United States.
+Services for masjids in the United States: nikah records and certificates, letters, and more, managed by the masjid's imam.
 
 Monorepo, same layout and Contabo deployment as the `ba` project.
 

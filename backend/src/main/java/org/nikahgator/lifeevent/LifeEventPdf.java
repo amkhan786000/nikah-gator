@@ -47,7 +47,7 @@ public final class LifeEventPdf {
             Color accent = color(lh.accent());
             writer.setPageEvent(new Frame(e, accent, !letter));
             doc.addTitle(e.getEventType().title() + " " + e.getCertNumber());
-            doc.addCreator("Nikah Gator");
+            doc.addCreator("Masjidly");
             doc.open();
 
             Font title = new Font(Font.TIMES_ROMAN, letter ? 22 : 30, Font.BOLD, accent);

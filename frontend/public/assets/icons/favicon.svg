@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <defs>
     <linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1d3a26"/><stop offset="1" stop-color="#0f1d16"/></linearGradient>
-    <mask id="m"><rect width="64" height="64" fill="#fff"/><circle cx="38" cy="28" r="15" fill="#000"/></mask>
   </defs>
   <rect width="64" height="64" rx="14" fill="url(#g)"/>
-  <circle cx="30" cy="33" r="18" fill="#9ccc3d" mask="url(#m)"/>
-  <polygon points="44.00,15.00 45.48,18.96 49.71,19.15 46.40,21.78 47.53,25.85 44.00,23.52 40.47,25.85 41.60,21.78 38.29,19.15 42.52,18.96" fill="#fff"/>
+  <path d="M16 54V32C16 20 27 14 32 6C37 14 48 20 48 32V54Z" fill="#9ccc3d"/>
+  <path d="M24 54V35C24 27 30 23 32 19C34 23 40 27 40 35V54Z" fill="#0f1d16"/>
+  <polygon points="32.00,33.50 33.47,37.10 37.35,37.38 34.37,39.90 35.29,43.67 32.00,41.60 28.71,43.67 29.63,39.90 26.65,37.38 30.53,37.10" fill="#fff"/>
 </svg>

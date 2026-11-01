@@ -29,7 +29,7 @@ grep -qE '^precedence ::ffff:0:0/96 +100' /etc/gai.conf 2>/dev/null || echo 'pre
 
 echo "==> Creating the $DEPLOY_USER user"
 if ! id "$DEPLOY_USER" >/dev/null 2>&1; then
-  adduser --disabled-password --gecos "Nikah Gator deploy" "$DEPLOY_USER"
+  adduser --disabled-password --gecos "Masjidly deploy" "$DEPLOY_USER"
 fi
 usermod -aG docker "$DEPLOY_USER"
 install -d -m 700 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "/home/$DEPLOY_USER/.ssh"
