@@ -4,10 +4,11 @@ import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService, errorMessage } from '../core/auth.service';
 import { Nikah } from './nikah.model';
+import { NikahPayments } from './nikah-payments';
 
 @Component({
   selector: 'app-nikah-view',
-  imports: [RouterLink, DatePipe],
+  imports: [RouterLink, DatePipe, NikahPayments],
   template: `
     @if (error()) { <div class="alert alert-danger">{{ error() }}</div> }
     @if (n(); as n) {
@@ -53,6 +54,9 @@ import { Nikah } from './nikah.model';
           <div><span>Notes</span><strong>{{ n.notes || '—' }}</strong></div>
         </div>
       </div></div>
+      <!-- feature:payments -->
+      <app-nikah-payments [nikahId]="n.id!" />
+      <!-- /feature:payments -->
     }
   `,
 })

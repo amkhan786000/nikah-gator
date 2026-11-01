@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { errorMessage } from '../core/auth.service';
 import { Nikah } from './nikah.model';
+import { PayStatus, StatusRow, statusBadge, statusLabel } from './payment.model';
 
 @Component({
   selector: 'app-nikah-list',
@@ -24,7 +25,7 @@ import { Nikah } from './nikah.model';
       </div>
       <div class="table-responsive">
         <table class="table table-hover mb-0">
-          <thead><tr><th>Date</th><th>Groom</th><th>Bride</th><th>Status</th><th></th></tr></thead>
+          <thead><tr><th>Date</th><th>Groom</th><th>Bride</th><th>Status</th><th>Fee</th><th></th></tr></thead>
           <tbody>
             @for (n of shown(); track n.id) {
               <tr>
@@ -35,10 +36,11 @@ import { Nikah } from './nikah.model';
                   <span class="badge" [class.badge-success]="n.status === 'COMPLETED'" [class.badge-info]="n.status === 'REGISTERED'"
                         [class.badge-secondary]="n.status === 'CANCELLED'">{{ n.status }}</span>
                 </td>
+                <td>@if (pay()[n.id!]; as ps) { <span class="badge" [class]="badge(ps)">{{ label(ps) }}</span> }</td>
                 <td class="text-right"><a class="btn btn-sm btn-outline-primary" [routerLink]="['/imam/nikahs', n.id]">Open</a></td>
               </tr>
             } @empty {
-              <tr><td colspan="5" class="text-center text-muted py-4">{{ loaded() ? 'No nikahs found.' : 'Loading…' }}</td></tr>
+              <tr><td colspan="6" class="text-center text-muted py-4">{{ loaded() ? 'No nikahs found.' : 'Loading…' }}</td></tr>
             }
           </tbody>
         </table>
@@ -52,6 +54,9 @@ export class NikahList {
   nikahs = signal<Nikah[]>([]);
   q = signal('');
   loaded = signal(false);
+  pay = signal<Record<number, PayStatus>>({});
+  label = statusLabel;
+  badge = statusBadge;
   error = signal('');
   shown = computed(() => {
     const q = this.q().trim().toLowerCase();
@@ -59,6 +64,9 @@ export class NikahList {
   });
 
   constructor() {
+    this.http.get<StatusRow[]>('/api/imam/payments/statuses').subscribe({
+      next: (r) => this.pay.set(Object.fromEntries(r.map((x) => [x.nikahId, x.status]))),
+    });
     this.http.get<Nikah[]>('/api/imam/nikahs').subscribe({
       next: (r) => {
         this.nikahs.set(r);
