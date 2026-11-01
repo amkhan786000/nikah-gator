@@ -9,4 +9,6 @@ public interface AppUserRepository extends JpaRepository<AppUser, Long> {
     Optional<AppUser> findByEmailIgnoreCase(String email);
 
     long countByRole(String role);
+
+    Optional<AppUser> findFirstByMasjidIdAndRole(Long masjidId, String role);
 }

@@ -41,19 +41,21 @@ public class AuthService {
     private final PasswordEncoder encoder;
     private final JwtService jwt;
     private final EmailService email;
+    private final TrustedDeviceService devices;
 
     /** Local testing only (LOG_OTP=true): print codes in the backend log so sign-in works without SMTP. */
     @Value("${app.mail.log-otp:false}")
     private boolean logOtp;
 
     public AuthService(AppUserRepository users, LoginOtpRepository otps, PasswordResetCodeRepository resetCodes,
-                       PasswordEncoder encoder, JwtService jwt, EmailService email) {
+                       PasswordEncoder encoder, JwtService jwt, EmailService email, TrustedDeviceService devices) {
         this.users = users;
         this.otps = otps;
         this.resetCodes = resetCodes;
         this.encoder = encoder;
         this.jwt = jwt;
         this.email = email;
+        this.devices = devices;
     }
 
     private Optional<AppUser> find(String address) {
@@ -64,7 +66,8 @@ public class AuthService {
         return String.format("%06d", RANDOM.nextInt(1_000_000));
     }
 
-    public AuthResponse login(LoginRequest req) {
+    /** Password check, then the emailed code, unless {@code deviceToken} is this user's remembered, unexpired browser. */
+    public AuthResponse login(LoginRequest req, String ip, String deviceToken) {
         AppUser user = find(req.email()).orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Invalid email or password"));
         requireNotLocked(user);
         if (!user.isEnabled()) {
@@ -75,6 +78,10 @@ public class AuthService {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
         }
         clearFailures(user);
+
+        if (devices.isTrusted(user.getId(), deviceToken, ip)) {
+            return issueToken(user);
+        }
 
         // Only the newest code works.
         List<LoginOtp> open = otps.findByUserIdAndUsedFalse(user.getId());
@@ -92,7 +99,7 @@ public class AuthService {
         if (logOtp) {
             log.warn("LOG_OTP is on: sign-in code for {} is {}", user.getEmail(), code);
         }
-        return AuthResponse.otpNeeded(user.getId(), "A code has been sent to your email. Please enter it to continue.");
+        return AuthResponse.otpNeeded(user.getId(), "A code has been sent to your email. Please enter it to continue.", devices.rememberDays());
     }
 
     public AuthResponse verifyOtp(OtpVerifyRequest req) {
@@ -151,7 +158,7 @@ public class AuthService {
     private AuthResponse issueToken(AppUser user) {
         String token = jwt.generateToken(user.getId(), Map.of("role", user.getRole(), "name", user.getFullName()));
         return new AuthResponse(false, user.getId(), null, token, user.getFullName(), user.getRole(), user.getMasjidId(),
-                user.isMustChangePassword());
+                user.isMustChangePassword(), devices.rememberDays());
     }
 
     /** Emails a reset code. Says nothing about whether the address has an account. */
@@ -204,6 +211,7 @@ public class AuthService {
         user.setFailedAttempts(0);
         user.setLockedUntil(null); // proving access to the mailbox also lifts a sign-in lock
         users.save(user);
+        devices.forgetAll(user.getId()); // a new password: every browser must use a code again
         email.send(user.getEmail(), "Your Nikah Gator password was changed",
                 "Your password was reset using \"Forgot password\". If this wasn't you, contact the administrator straight away.");
     }
@@ -219,5 +227,6 @@ public class AuthService {
         user.setPasswordHash(encoder.encode(req.newPassword()));
         user.setMustChangePassword(false);
         users.save(user);
+        devices.forgetAll(user.getId());
     }
 }
