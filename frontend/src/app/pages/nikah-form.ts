@@ -1,9 +1,10 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { errorMessage } from '../core/auth.service';
 import { Nikah } from './nikah.model';
+import { NikahUploadPicker } from './nikah-upload-picker';
 
 function blank(): Nikah {
   return {
@@ -16,7 +17,7 @@ function blank(): Nikah {
 
 @Component({
   selector: 'app-nikah-form',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, NikahUploadPicker],
   template: `
     <div class="page-title-box"><h4 class="page-title">{{ id ? 'Edit nikah' : 'Register nikah' }}</h4></div>
     @if (error()) { <div class="alert alert-danger">{{ error() }}</div> }
@@ -54,8 +55,12 @@ function blank(): Nikah {
 
       <div class="form-group"><label>Notes</label><textarea class="form-control" name="notes" rows="3" [(ngModel)]="n.notes"></textarea></div>
 
+      <!-- feature:documents -->
+      <app-nikah-upload-picker #picker [nikahId]="id" />
+      <!-- /feature:documents -->
+
       <div class="d-flex flex-wrap" style="gap:.5rem">
-        <button class="btn btn-primary btn-responsive" [disabled]="busy()">{{ busy() ? 'Saving…' : 'Save' }}</button>
+        <button class="btn btn-primary btn-responsive" [disabled]="busy()">{{ busy() ? (uploading() ? 'Uploading documents…' : 'Saving…') : 'Save' }}</button>
         <a class="btn btn-secondary btn-responsive" [routerLink]="id ? ['/imam/nikahs', id] : ['/imam/nikahs']">Cancel</a>
       </div>
     </div></form>
@@ -68,6 +73,8 @@ export class NikahForm {
   id = inject(ActivatedRoute).snapshot.paramMap.get('id');
   n: Nikah = blank();
   busy = signal(false);
+  uploading = signal(false);
+  picker = viewChild.required<NikahUploadPicker>('picker');
   error = signal('');
 
   constructor() {
@@ -86,7 +93,12 @@ export class NikahForm {
       ? this.http.put<Nikah>(`/api/imam/nikahs/${this.id}`, this.n)
       : this.http.post<Nikah>('/api/imam/nikahs', this.n);
     call.subscribe({
-      next: (r) => this.router.navigate(['/imam/nikahs', r.id]),
+      next: async (r) => {
+        // feature:documents - upload the picked files now that the nikah exists; failures are shown on the nikah page
+        this.uploading.set(true);
+        const failedUploads = await this.picker().uploadAll(r.id!);
+        this.router.navigate(['/imam/nikahs', r.id], { state: { failedUploads } });
+      },
       error: (e) => {
         this.busy.set(false);
         this.error.set(errorMessage(e));
