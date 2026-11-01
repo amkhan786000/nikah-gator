@@ -29,6 +29,12 @@ public class SalahController {
         return service.overview(user);
     }
 
+    /** Finds the masjid's coordinates from its address (the imam checks them before saving). */
+    @PostMapping("/locate")
+    public Location locate(@AuthenticationPrincipal AppUser user) {
+        return service.locate(user);
+    }
+
     @PutMapping("/settings")
     public SettingsDto saveSettings(@AuthenticationPrincipal AppUser user, @RequestBody SettingsDto req) {
         return service.saveSettings(user, req);

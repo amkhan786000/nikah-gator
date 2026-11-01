@@ -27,4 +27,12 @@ public class SalahSettings {
 
     @Column(name = "show_sunrise")
     private boolean showSunrise = true;
+
+    /** Where the masjid is, for the sunrise and sunset calculation (both set, or neither). */
+    private Double latitude;
+    private Double longitude;
+
+    /** Maghrib = sunset + this many minutes. */
+    @Column(name = "maghrib_offset_min")
+    private int maghribOffsetMin = 3;
 }

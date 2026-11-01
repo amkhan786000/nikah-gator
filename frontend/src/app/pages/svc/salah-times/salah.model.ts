@@ -1,9 +1,23 @@
+export interface Session {
+  time: string;
+  label: string;
+}
+
+export interface SunPreview {
+  sunrise: string;
+  sunset: string;
+  maghrib: string;
+}
+
 export interface Settings {
   changeUnit: 'DAYS' | 'WEEKS' | 'MONTHS';
   changeEvery: number;
   publicEnabled: boolean;
   publicDays: number;
   showSunrise: boolean;
+  latitude: number | null;
+  longitude: number | null;
+  maghribOffsetMinutes: number;
 }
 
 export interface Period {
@@ -14,9 +28,9 @@ export interface Period {
   sunrise: string | null;
   dhuhr: string;
   asr: string;
-  maghrib: string;
+  maghrib: string | null;
   isha: string;
-  jumuah: string | null;
+  jumuah: Session[];
   notes: string | null;
   current: boolean;
 }
@@ -33,6 +47,7 @@ export interface Overview {
   nextStart: string;
   nextEnd: string;
   lastPeriod: Period | null;
+  sunToday: SunPreview | null;
 }
 
 export interface ImportRow {
@@ -43,9 +58,9 @@ export interface ImportRow {
   sunrise: string | null;
   dhuhr: string;
   asr: string;
-  maghrib: string;
+  maghrib: string | null;
   isha: string;
-  jumuah: string | null;
+  jumuah: Session[];
   notes: string | null;
 }
 

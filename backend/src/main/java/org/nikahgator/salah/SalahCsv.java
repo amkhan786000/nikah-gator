@@ -24,8 +24,13 @@ public final class SalahCsv {
 
     public static final int MAX_ROWS = 800;
 
+    /** One Jumu'ah in the file (a masjid may have several). */
+    public record Jumuah(LocalTime time, String label) {
+    }
+
+    /** Sunrise and Maghrib are null when the file does not give them: they are then calculated from the masjid's location. */
     public record Row(int line, LocalDate start, LocalDate end, LocalTime fajr, LocalTime sunrise, LocalTime dhuhr,
-                      LocalTime asr, LocalTime maghrib, LocalTime isha, LocalTime jumuah, String notes) {
+                      LocalTime asr, LocalTime maghrib, LocalTime isha, List<Jumuah> jumuah, String notes) {
     }
 
     public record Result(List<Row> rows, List<String> errors) {
@@ -90,7 +95,7 @@ public final class SalahCsv {
             errors.add("The first row must name the columns, with a \"date\" column (one day per row) or \"start date\" and \"end date\" columns (a range per row).");
             return new Result(rows, errors);
         }
-        for (String need : new String[] { "fajr", "dhuhr", "asr", "maghrib", "isha" }) {
+        for (String need : new String[] { "fajr", "dhuhr", "asr", "isha" }) {
             if (!columns.contains(need)) {
                 errors.add("The file has no \"" + need + "\" column.");
             }
@@ -111,7 +116,11 @@ public final class SalahCsv {
             Map<String, String> v = new HashMap<>();
             for (int c = 0; c < columns.size() && c < cells.size(); c++) {
                 if (!columns.get(c).isEmpty() && !cells.get(c).isBlank()) {
-                    v.putIfAbsent(columns.get(c), cells.get(c).trim());
+                    String key = columns.get(c);
+                    for (int n = 2; v.containsKey(key) && key.startsWith("jumuah"); n++) {
+                        key = "jumuah#" + n; // jumuah 1, jumuah 2 ... columns
+                    }
+                    v.putIfAbsent(key, cells.get(c).trim());
                 }
             }
             int before = errors.size();
@@ -121,9 +130,9 @@ public final class SalahCsv {
             LocalTime sunrise = time("sunrise", v.get("sunrise"), false, lineNo, errors);
             LocalTime dhuhr = time("dhuhr", v.get("dhuhr"), true, lineNo, errors);
             LocalTime asr = time("asr", v.get("asr"), true, lineNo, errors);
-            LocalTime maghrib = time("maghrib", v.get("maghrib"), true, lineNo, errors);
+            LocalTime maghrib = time("maghrib", v.get("maghrib"), false, lineNo, errors);
             LocalTime isha = time("isha", v.get("isha"), true, lineNo, errors);
-            LocalTime jumuah = time("jumuah", v.get("jumuah"), false, lineNo, errors);
+            List<Jumuah> jumuah = jumuah(v, lineNo, errors);
             if (errors.size() > before) {
                 continue;
             }
@@ -156,13 +165,44 @@ public final class SalahCsv {
     public static String orderProblem(LocalTime fajr, LocalTime sunrise, LocalTime dhuhr, LocalTime asr, LocalTime maghrib, LocalTime isha) {
         List<LocalTime> t = new ArrayList<>(List.of(fajr));
         if (sunrise != null) t.add(sunrise);
-        t.addAll(List.of(dhuhr, asr, maghrib, isha));
+        t.addAll(List.of(dhuhr, asr));
+        if (maghrib != null) t.add(maghrib);
+        t.add(isha);
         for (int i = 1; i < t.size(); i++) {
             if (!t.get(i).isAfter(t.get(i - 1))) {
                 return "the times are not in order (Fajr, Sunrise, Dhuhr, Asr, Maghrib, Isha). Check AM/PM.";
             }
         }
         return null;
+    }
+
+    private static final Pattern SPLIT = Pattern.compile("\\s*(?:\\||&|\\+|/|\\band\\b)\\s*", Pattern.CASE_INSENSITIVE);
+    private static final Pattern LABELLED = Pattern.compile("^(.*?)\\s*\\((.*)\\)\\s*$");
+
+    /** Every Jumu'ah in the row: one cell may list several ("1:15 PM | 2:15 PM (English)"), or there are jumuah 1, jumuah 2 columns. */
+    private static List<Jumuah> jumuah(Map<String, String> v, int line, List<String> errors) {
+        List<Jumuah> out = new ArrayList<>();
+        for (Map.Entry<String, String> e : new java.util.TreeMap<>(v).entrySet()) {
+            if (!e.getKey().startsWith("jumuah")) {
+                continue;
+            }
+            for (String part : SPLIT.split(e.getValue())) {
+                if (part.isBlank()) {
+                    continue;
+                }
+                Matcher m = LABELLED.matcher(part.trim());
+                String when = m.matches() ? m.group(1) : part.trim();
+                String label = m.matches() ? m.group(2).trim() : "";
+                LocalTime t = parseTime("jumuah", when);
+                if (t == null) {
+                    errors.add("Line " + line + ": \"" + when + "\" is not a time I can read for jumuah (use 1:15 PM).");
+                } else {
+                    out.add(new Jumuah(t, label));
+                }
+            }
+        }
+        out.sort((a, b) -> a.time().compareTo(b.time()));
+        return out;
     }
 
     private static LocalDate date(String s, String what, int line, List<String> errors) {

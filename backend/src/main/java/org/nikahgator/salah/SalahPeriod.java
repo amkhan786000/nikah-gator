@@ -31,6 +31,8 @@ public class SalahPeriod {
     private LocalTime asr;
     private LocalTime maghrib;
     private LocalTime isha;
-    private LocalTime jumuah;
+    /** Every Jumu'ah as "13:15|English;14:15|" (time, optional label). */
+    @Column(name = "jumuah_sessions")
+    private String jumuahSessions;
     private String notes;
 }
