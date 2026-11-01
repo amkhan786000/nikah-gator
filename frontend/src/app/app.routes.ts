@@ -4,6 +4,7 @@ import { authGuard, guestGuard, imamOnlyGuard, roleGuard, serviceGuard } from '.
 export const routes: Routes = [
   { path: 'login', canActivate: [guestGuard], loadComponent: () => import('./pages/login').then((m) => m.Login) },
   { path: 'forgot-password', canActivate: [guestGuard], loadComponent: () => import('./pages/forgot-password').then((m) => m.ForgotPassword) },
+  { path: 'salah/:slug', loadComponent: () => import('./pages/public-salah').then((m) => m.PublicSalah) },
   { path: 'verify/:number', loadComponent: () => import('./pages/verify-certificate').then((m) => m.VerifyCertificate) },
   {
     path: '',
@@ -212,6 +213,26 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/svc/divorce/divorce-view').then((m) => m.DivorceView),
       },
       //
+      {
+        path: 'imam/svc/salah-times',
+        canActivate: [roleGuard('IMAM'), serviceGuard('SALAH_TIMES')],
+        loadComponent: () => import('./pages/svc/salah-times/salah-times').then((m) => m.SalahTimes),
+      },
+      {
+        path: 'imam/svc/salah-times/new',
+        canActivate: [roleGuard('IMAM'), serviceGuard('SALAH_TIMES')],
+        loadComponent: () => import('./pages/svc/salah-times/salah-form').then((m) => m.SalahForm),
+      },
+      {
+        path: 'imam/svc/salah-times/import',
+        canActivate: [roleGuard('IMAM'), serviceGuard('SALAH_TIMES')],
+        loadComponent: () => import('./pages/svc/salah-times/salah-import').then((m) => m.SalahImport),
+      },
+      {
+        path: 'imam/svc/salah-times/:id',
+        canActivate: [roleGuard('IMAM'), serviceGuard('SALAH_TIMES')],
+        loadComponent: () => import('./pages/svc/salah-times/salah-form').then((m) => m.SalahForm),
+      },
       { path: '', pathMatch: 'full', loadComponent: () => import('./pages/home-redirect').then((m) => m.HomeRedirect) },
     ],
   },
