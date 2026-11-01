@@ -3,6 +3,7 @@ import { CardTableDirective } from '../shared/card-table.directive';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { errorMessage } from '../core/auth.service';
 
 interface MasjidView {
@@ -26,7 +27,7 @@ const EMPTY = {
 
 @Component({
   selector: 'app-admin-masjids',
-  imports: [CardTableDirective, FormsModule, DatePipe],
+  imports: [CardTableDirective, FormsModule, DatePipe, RouterLink],
   template: `
     <div class="page-title-box d-flex flex-wrap align-items-center justify-content-between">
       <h4 class="page-title">Masjids</h4>
@@ -77,7 +78,8 @@ const EMPTY = {
                 </td>
                 <td>{{ m.createdAt | date: 'mediumDate' }}</td>
                 <td class="text-nowrap text-right">
-                  <button class="btn btn-sm btn-outline-primary" (click)="resend(m)">Resend login</button>
+                  <a class="btn btn-sm btn-outline-primary" [routerLink]="['/admin/masjids', m.id, 'services']">Services</a>
+                  <button class="btn btn-sm btn-outline-primary ml-1" (click)="resend(m)">Resend login</button>
                   <button class="btn btn-sm btn-secondary ml-1" (click)="toggle(m)">{{ m.active ? 'Deactivate' : 'Activate' }}</button>
                 </td>
               </tr>
