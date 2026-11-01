@@ -1,0 +1,10 @@
+.env
+.env.bak*
+.idea/
+*.iml
+.DS_Store
+target/
+uploads/
+node_modules/
+dist/
+.angular/

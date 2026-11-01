@@ -1,0 +1,72 @@
+# Production stack for the Contabo server. Images are built by GitHub Actions and pulled from ghcr.io.
+# Settings come from /opt/nikahgator/.env. Run via deploy.sh.
+# Joins the shared Caddy front door of the other apps (see deploy/README.md).
+
+name: nikahgator
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: nikahgator-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD in /opt/nikahgator/.env}
+      MYSQL_DATABASE: ${DB_NAME:-nikahgator}
+      MYSQL_USER: ${DB_USER:-nikahgator}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in /opt/nikahgator/.env}
+    # Server-local only; use an SSH tunnel for DBeaver etc.
+    ports:
+      - "127.0.0.1:${DB_TUNNEL_PORT:-3308}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  backend:
+    image: ${REGISTRY:-ghcr.io/amkhan786000}/nikahgator-backend:${TAG:-latest}
+    container_name: nikahgator-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: jdbc:mysql://mysql:3306/${DB_NAME:-nikahgator}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USER: ${DB_USER:-nikahgator}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in /opt/nikahgator/.env}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-28800000}
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+      CORS_ALLOWED_ORIGINS: ${PUBLIC_URL:-http://localhost}
+      UPLOAD_DIR: /app/uploads
+      JAVA_TOOL_OPTIONS: ${JAVA_OPTS:--Xms256m -Xmx768m}
+    volumes:
+      - uploads:/app/uploads
+
+  frontend:
+    image: ${REGISTRY:-ghcr.io/amkhan786000}/nikahgator-frontend:${TAG:-latest}
+    container_name: nikahgator-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      # Behind Caddy: 127.0.0.1:8082 only. Caddy reaches it by container name.
+      - "${HTTP_BIND:-127.0.0.1:8082}:80"
+    networks:
+      - default
+      - caddy
+
+networks:
+  caddy:
+    name: ${CADDY_NETWORK:-rahbar_default}
+    external: true
+
+volumes:
+  mysql-data:
+  uploads:
