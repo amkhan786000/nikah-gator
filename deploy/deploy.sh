@@ -53,7 +53,14 @@ if [ -f .incoming-secrets ]; then
 fi
 JWT="$(envval JWT_SECRET)"
 if [ "${#JWT}" -lt 32 ]; then log "JWT_SECRET must be a long random value."; exit 1; fi
-HEALTH_URL="http://${HEALTH_ADDR:-$(envval HTTP_BIND)}/api/public/health"
+# HTTP_BIND is "host:port" or just "port" (public on all interfaces); the health check always uses 127.0.0.1.
+HTTP_BIND_VALUE="$(envval HTTP_BIND)"
+case "$HTTP_BIND_VALUE" in
+  "")   HEALTH_ADDR_DEFAULT="127.0.0.1:8082" ;;
+  *:*)  HEALTH_ADDR_DEFAULT="127.0.0.1:${HTTP_BIND_VALUE##*:}" ;;
+  *)    HEALTH_ADDR_DEFAULT="127.0.0.1:${HTTP_BIND_VALUE}" ;;
+esac
+HEALTH_URL="http://${HEALTH_ADDR:-$HEALTH_ADDR_DEFAULT}/api/public/health"
 
 PREVIOUS_TAG="$(cat "$STATE_FILE" 2>/dev/null || true)"
 log "Deploying $TAG (currently running: ${PREVIOUS_TAG:-nothing})"
