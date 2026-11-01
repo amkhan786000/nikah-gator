@@ -13,6 +13,8 @@ public class AppUser {
     public static final String PLATFORM_ADMIN = "PLATFORM_ADMIN";
     public static final String IMAM = "IMAM";
     public static final String COUPLE = "COUPLE";
+    /** Added by the imam; sees and manages only the services the imam grants. */
+    public static final String STAFF = "STAFF";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,6 +32,9 @@ public class AppUser {
     private String fullName;
 
     private String phone;
+
+    @Column(name = "job_title")
+    private String jobTitle;
     private String role;
     private boolean enabled = true;
 

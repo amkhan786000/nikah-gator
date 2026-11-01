@@ -11,4 +11,6 @@ public interface AppUserRepository extends JpaRepository<AppUser, Long> {
     long countByRole(String role);
 
     Optional<AppUser> findFirstByMasjidIdAndRole(Long masjidId, String role);
+
+    java.util.List<AppUser> findByMasjidIdAndRoleOrderByFullName(Long masjidId, String role);
 }

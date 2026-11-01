@@ -7,6 +7,8 @@ export interface EnabledService {
   slug: string;
   label: string;
   icon: string;
+  /** What the signed-in user may do here: VIEW (look only) or MANAGE. */
+  level: 'VIEW' | 'MANAGE';
 }
 
 /** The services the platform admin has switched on for the signed-in imam (drives the menu and route guards). */

@@ -18,7 +18,7 @@ interface NavLink { path: string; label: string; icon: string }
           <span class="brand-text"><strong>Masjidly</strong><small>{{ auth.me()?.masjidName || 'Platform admin' }}</small></span>
         </a>
         <nav class="app-nav">
-          <div class="nav-section">{{ auth.me()?.role === 'PLATFORM_ADMIN' ? 'Administration' : 'Imam' }}</div>
+          <div class="nav-section">{{ auth.me()?.role === 'PLATFORM_ADMIN' ? 'Administration' : auth.me()?.role === 'STAFF' ? 'Staff' : 'Imam' }}</div>
           @for (l of links(); track l.path) {
             <a class="nav-item" [routerLink]="l.path" routerLinkActive="active" [title]="collapsed() ? l.label : ''"
                (click)="mobileOpen.set(false)">
@@ -44,6 +44,7 @@ interface NavLink { path: string; label: string; icon: string }
               @if (menuOpen()) {
                 <div class="user-menu">
                   <div class="user-menu-head"><strong>{{ auth.me()?.name }}</strong><small>{{ auth.me()?.email }}</small></div>
+                  <a routerLink="/profile" (click)="menuOpen.set(false)"><i class="mdi mdi-account-circle-outline"></i><span>My profile</span></a>
                   <a routerLink="/change-password" (click)="menuOpen.set(false)"><i class="mdi mdi-lock-reset"></i><span>Change password</span></a>
                   <a href="#" class="danger" (click)="$event.preventDefault(); auth.logout()"><i class="mdi mdi-logout-variant"></i><span>Sign out</span></a>
                 </div>
@@ -52,7 +53,12 @@ interface NavLink { path: string; label: string; icon: string }
           </div>
         </header>
 
-        <main class="app-content"><router-outlet /></main>
+        <main class="app-content" [class.view-only]="!!viewOnlyLabel()">
+          @if (viewOnlyLabel(); as vo) {
+            <div class="alert alert-info no-print"><i class="mdi mdi-eye-outline"></i> You have view-only access to {{ vo }}.</div>
+          }
+          <router-outlet />
+        </main>
         <footer class="app-footer no-print"><span>© {{ year }} Masjidly</span></footer>
       </div>
     </div>
@@ -67,19 +73,22 @@ export class Shell {
   mobileOpen = signal(false);
   menuOpen = signal(false);
   label = signal('');
+  url = signal('');
   readonly year = new Date().getFullYear();
 
   constructor() {
     this.router.events.pipe(filter((e) => e instanceof NavigationEnd)).subscribe(() => {
       this.mobileOpen.set(false);
       this.label.set(this.labelFor(this.router.url));
+      this.url.set(this.router.url);
     });
+    this.url.set(this.router.url);
     this.label.set(this.labelFor(this.router.url));
     // The imam's menu comes from the catalog. It loads once the profile is known and the password is no longer
     // a temporary one (the API refuses everything else), and again after the catalog is cleared.
     effect(() => {
       const me = this.auth.me();
-      if (me?.role === 'IMAM' && !me.mustChangePassword && this.catalog.services() === null) {
+      if ((me?.role === 'IMAM' || me?.role === 'STAFF') && !me.mustChangePassword && this.catalog.services() === null) {
         untracked(() => this.catalog.load(true).subscribe({ error: () => undefined }));
       }
     });
@@ -99,20 +108,37 @@ export class Shell {
     const links: NavLink[] = [];
     for (const s of on) {
       if (s.key === 'NIKAH') {
-        links.push(
-          { path: '/imam/nikahs', label: 'Nikahs', icon: 'mdi-book-open-page-variant' },
-          { path: '/imam/settings', label: 'Masjid settings', icon: 'mdi-settings' },
-          { path: '/imam/certificate-design', label: 'Certificate design', icon: 'mdi-certificate-outline' },
-        );
+        links.push({ path: '/imam/nikahs', label: 'Nikahs', icon: 'mdi-book-open-page-variant' });
+        // the masjid's own settings and certificate design are the imam's to change
+        if (this.auth.me()?.role === 'IMAM') {
+          links.push(
+            { path: '/imam/settings', label: 'Masjid settings', icon: 'mdi-settings' },
+            { path: '/imam/certificate-design', label: 'Certificate design', icon: 'mdi-certificate-outline' },
+          );
+        }
       } else {
         links.push({ path: '/imam/svc/' + s.slug, label: s.label, icon: s.icon });
       }
     }
+    if (this.auth.me()?.role === 'IMAM') {
+      links.push({ path: '/imam/staff', label: 'Team', icon: 'mdi-account-multiple-outline' });
+    }
     return links;
   }
 
+  /** The name of the service on screen when the signed-in user may only look at it. */
+  viewOnlyLabel(): string {
+    const u = this.url().split(/[?#]/)[0];
+    const svc = /^\/imam\/svc\/([^/]+)/.exec(u);
+    const nikahArea = /^\/imam\/(nikahs|settings|certificate-design)/.test(u);
+    const s = this.catalog.services()?.find((x) => (svc ? x.slug === svc[1] : nikahArea && x.key === 'NIKAH'));
+    return s?.level === 'VIEW' ? s.label : '';
+  }
+
   roleLabel(): string {
-    return this.auth.me()?.role === 'PLATFORM_ADMIN' ? 'Platform admin' : 'Imam';
+    const me = this.auth.me();
+    if (me?.role === 'PLATFORM_ADMIN') return 'Platform admin';
+    return me?.jobTitle || (me?.role === 'STAFF' ? 'Staff' : 'Imam');
   }
 
   initials(): string {
@@ -129,6 +155,8 @@ export class Shell {
     if (u.startsWith('/admin/masjids/') && u.endsWith('/services')) return 'Services';
     if (u.startsWith('/admin/masjids')) return 'Masjids';
     if (u.startsWith('/imam/not-available')) return 'Not available';
+    if (u.startsWith('/imam/staff')) return 'Team';
+    if (u.startsWith('/profile')) return 'My profile';
     const svc = /^\/imam\/svc\/([^/]+)/.exec(u);
     if (svc) return this.catalog.services()?.find((x) => x.slug === svc[1])?.label ?? '';
     if (u.startsWith('/imam/settings')) return 'Masjid settings';

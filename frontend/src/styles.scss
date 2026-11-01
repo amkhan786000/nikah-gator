@@ -827,3 +827,7 @@ body:has(.modal.show) .modal { overflow-x: hidden; overflow-y: auto; }
   text-align: center; line-height: 1.1; white-space: normal; padding: 0 8%;
 }
 @media print { .certificate.is-preview { display: none !important; } }
+
+/* View-only access (set on <main> by the shell): hide the buttons that start adding a record. Mark such a
+   button with .needs-manage. The server refuses changes either way; this just avoids offering what will fail. */
+.view-only a[href$="/new"], .view-only .needs-manage { display: none !important; }

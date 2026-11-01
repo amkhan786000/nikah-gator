@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.nikahgator.entity.AppUser;
 import org.nikahgator.repository.AppUserRepository;
+import org.nikahgator.repository.MasjidRepository;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -20,10 +21,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final AppUserRepository users;
+    private final MasjidRepository masjids;
 
-    public JwtAuthFilter(JwtService jwtService, AppUserRepository users) {
+    public JwtAuthFilter(JwtService jwtService, AppUserRepository users, MasjidRepository masjids) {
         this.jwtService = jwtService;
         this.users = users;
+        this.masjids = masjids;
     }
 
     @Override
@@ -33,7 +36,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (header != null && header.startsWith("Bearer ")) {
             try {
                 AppUser user = users.findById(jwtService.userIdFrom(header.substring(7))).orElse(null);
-                if (user != null && user.isEnabled()) {
+                if (user != null && user.isEnabled() && masjidIsActive(user)) {
                     var auth = new UsernamePasswordAuthenticationToken(user, null,
                             List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole())));
                     SecurityContextHolder.getContext().setAuthentication(auth);
@@ -51,6 +54,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             }
         }
         chain.doFilter(request, response);
+    }
+
+    /** A deactivated masjid locks out everyone who belongs to it, including staff the imam added. */
+    private boolean masjidIsActive(AppUser user) {
+        return user.getMasjidId() == null || masjids.findById(user.getMasjidId()).map(m -> m.isActive()).orElse(false);
     }
 
     private static boolean allowedBeforePasswordChange(String path) {

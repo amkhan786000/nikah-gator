@@ -19,13 +19,22 @@ export const authGuard: CanActivateFn = (_route, state) => {
   );
 };
 
+/** 'IMAM' means the imam's area: the imam and the staff the imam added (what staff may do is enforced per service). */
 export const roleGuard =
   (role: Role): CanActivateFn =>
   () => {
     const auth = inject(AuthService);
     const router = inject(Router);
-    return auth.me()?.role === role ? true : router.parseUrl(auth.homeFor(auth.me()?.role));
+    const mine = auth.me()?.role;
+    const ok = mine === role || (role === 'IMAM' && mine === 'STAFF');
+    return ok ? true : router.parseUrl(auth.homeFor(mine));
   };
+
+/** Pages only the imam may open (managing the team). */
+export const imamOnlyGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  return auth.me()?.role === 'IMAM' ? true : inject(Router).parseUrl(auth.homeFor(auth.me()?.role));
+};
 
 export const guestGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
