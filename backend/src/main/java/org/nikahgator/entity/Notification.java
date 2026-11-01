@@ -1,5 +1,7 @@
 package org.nikahgator.entity;
 
+import org.nikahgator.audit.Auditable;
+import org.nikahgator.audit.NoActivityLog;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.*;
@@ -8,9 +10,10 @@ import lombok.Setter;
 
 /** A scheduled message (e-mail now, SMS later). All timestamps are UTC. */
 @Entity
+@NoActivityLog
 @Table(name = "notifications")
 @Getter @Setter
-public class Notification {
+public class Notification extends Auditable {
     public static final String PENDING = "PENDING";
     public static final String SENDING = "SENDING";
     public static final String SENT = "SENT";

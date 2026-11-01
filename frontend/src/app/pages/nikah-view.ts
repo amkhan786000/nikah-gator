@@ -1,3 +1,4 @@
+import { AuditInfoView } from '../shared/audit-info';
 import { HttpClient } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
@@ -12,7 +13,7 @@ import { NikahDivorceNote } from './svc/divorce/nikah-divorce-note';
 
 @Component({
   selector: 'app-nikah-view',
-  imports: [RouterLink, DatePipe, NikahCertificate, NikahDocuments, NikahNotifications, NikahPayments, NikahDivorceNote],
+  imports: [AuditInfoView, RouterLink, DatePipe, NikahCertificate, NikahDocuments, NikahNotifications, NikahPayments, NikahDivorceNote],
   template: `
     @if (error()) { <div class="alert alert-danger">{{ error() }}</div> }
     @if (n(); as n) {
@@ -35,6 +36,7 @@ import { NikahDivorceNote } from './svc/divorce/nikah-divorce-note';
           <div><span>Notes</span><strong>{{ n.notes || '—' }}</strong></div>
         </div>
       </div></div>
+      <app-audit-info type="NikahRequest" [id]="n.id" />
       <!-- feature:certificates -->
       <app-nikah-certificate [nikahId]="n.id!" [status]="n.status ?? ''" />
       <!-- /feature:certificates -->

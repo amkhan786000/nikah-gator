@@ -1,5 +1,6 @@
 package org.nikahgator.communityservice;
 
+import org.nikahgator.audit.Auditable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -12,7 +13,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "community_service_certs")
 @Getter @Setter
-public class ServiceCert {
+public class ServiceCert extends Auditable {
     public static final String VALID = "VALID";
     public static final String VOID = "VOID";
     public static final String STUDENT = "STUDENT";
@@ -64,6 +65,4 @@ public class ServiceCert {
     @Column(name = "voided_by")
     private Long voidedBy;
 
-    @Column(name = "created_by")
-    private Long createdBy;
 }

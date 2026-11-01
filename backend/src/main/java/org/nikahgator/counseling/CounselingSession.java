@@ -1,5 +1,7 @@
 package org.nikahgator.counseling;
 
+import org.nikahgator.audit.AuditRedact;
+import org.nikahgator.audit.Auditable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -12,7 +14,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "counseling_sessions")
 @Getter @Setter
-public class CounselingSession {
+public class CounselingSession extends Auditable {
     public static final Set<String> TYPES = Set.of("MARRIAGE", "FAMILY", "YOUTH", "PERSONAL", "OTHER");
     public static final Set<String> STATUSES = Set.of("SCHEDULED", "COMPLETED", "CANCELLED");
 
@@ -39,6 +41,7 @@ public class CounselingSession {
     private Integer durationMin;
 
     @Column(columnDefinition = "TEXT")
+    @AuditRedact
     private String notes;
 
     @Column(name = "follow_up_on")

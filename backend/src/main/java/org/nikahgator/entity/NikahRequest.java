@@ -1,5 +1,6 @@
 package org.nikahgator.entity;
 
+import org.nikahgator.audit.Auditable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -10,7 +11,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "nikah_requests")
 @Getter @Setter
-public class NikahRequest {
+public class NikahRequest extends Auditable {
     public static final String REGISTERED = "REGISTERED";
     public static final String COMPLETED = "COMPLETED";
     public static final String CANCELLED = "CANCELLED";
@@ -68,6 +69,4 @@ public class NikahRequest {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
-    @Column(name = "created_at", insertable = false, updatable = false)
-    private LocalDateTime createdAt;
 }

@@ -29,6 +29,16 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/team/staff-form').then((m) => m.StaffForm),
       },
       {
+        path: 'imam/activity',
+        canActivate: [imamOnlyGuard],
+        loadComponent: () => import('./pages/activity/activity-log').then((m) => m.ActivityLog),
+      },
+      {
+        path: 'admin/activity',
+        canActivate: [roleGuard('PLATFORM_ADMIN')],
+        loadComponent: () => import('./pages/activity/activity-log').then((m) => m.ActivityLog),
+      },
+      {
         path: 'imam/email-log',
         canActivate: [imamOnlyGuard],
         loadComponent: () => import('./pages/email-log').then((m) => m.EmailLogPage),

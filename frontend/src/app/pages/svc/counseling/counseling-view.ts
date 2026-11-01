@@ -1,3 +1,4 @@
+import { AuditInfoView } from '../../../shared/audit-info';
 import { HttpClient } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
@@ -7,7 +8,7 @@ import { CounselingDetail, statusBadge } from './counseling.model';
 
 @Component({
   selector: 'app-counseling-view',
-  imports: [RouterLink, DatePipe],
+  imports: [AuditInfoView, RouterLink, DatePipe],
   template: `
     @if (error()) { <div class="alert alert-danger">{{ error() }}</div> }
     @if (s(); as s) {
@@ -31,6 +32,7 @@ import { CounselingDetail, statusBadge } from './counseling.model';
         <span class="card-header-title mt-3">Private notes</span>
         <p style="white-space:pre-wrap" class="mb-0">{{ s.notes || '—' }}</p>
       </div></div>
+      <app-audit-info type="CounselingSession" [id]="s.id" />
     }
   `,
 })

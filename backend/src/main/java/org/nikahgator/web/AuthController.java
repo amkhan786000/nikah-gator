@@ -2,6 +2,7 @@ package org.nikahgator.web;
 
 import java.util.Map;
 
+import org.nikahgator.audit.ActivityLogService;
 import org.nikahgator.dto.AuthDtos.*;
 import org.nikahgator.entity.AppUser;
 import org.nikahgator.service.AuthService;
@@ -19,8 +20,11 @@ public class AuthController {
     private final AuthService auth;
     private final TrustedDeviceService devices;
     private final MasjidRepository masjids;
+    private final ActivityLogService activity;
 
-    public AuthController(AuthService auth, TrustedDeviceService devices, MasjidRepository masjids) {
+    public AuthController(AuthService auth, TrustedDeviceService devices, MasjidRepository masjids,
+                          ActivityLogService activity) {
+        this.activity = activity;
         this.auth = auth;
         this.devices = devices;
         this.masjids = masjids;
@@ -59,6 +63,13 @@ public class AuthController {
     public Map<String, String> changePassword(@AuthenticationPrincipal AppUser user, @RequestBody ChangePasswordRequest req) {
         auth.changePassword(user, req);
         return Map.of("message", "Your password has been changed.");
+    }
+
+    /** Tokens are stateless, so this only records the sign-out in the activity log. */
+    @PostMapping("/logout")
+    public Map<String, String> logout(@AuthenticationPrincipal AppUser user) {
+        activity.record(ActivityLogService.LOGOUT, user.getMasjidId(), "AppUser", user.getId(), "Signed out", null);
+        return Map.of("message", "Signed out.");
     }
 
     @GetMapping("/me")

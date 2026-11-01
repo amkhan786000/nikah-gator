@@ -1,5 +1,6 @@
 package org.nikahgator.divorce;
 
+import org.nikahgator.audit.Auditable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -11,7 +12,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "divorce_records")
 @Getter @Setter
-public class Divorce {
+public class Divorce extends Auditable {
     public static final String RECORDED = "RECORDED";
     public static final String REVOKED = "REVOKED";
 
@@ -71,8 +72,4 @@ public class Divorce {
     private LocalDateTime voidedAt;
     @Column(name = "voided_by")
     private Long voidedBy;
-    @Column(name = "created_by")
-    private Long createdBy;
-    @Column(name = "created_at", insertable = false, updatable = false)
-    private LocalDateTime createdAt;
 }

@@ -1,3 +1,4 @@
+import { AuditInfoView } from '../../../shared/audit-info';
 import { HttpClient } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
@@ -10,7 +11,7 @@ import { SendEmail } from '../../../shared/send-email';
 
 @Component({
   selector: 'app-cs-view',
-  imports: [FormsModule, RouterLink, DatePipe, SendEmail],
+  imports: [AuditInfoView, FormsModule, RouterLink, DatePipe, SendEmail],
   template: `
     <div class="page-title-box d-flex flex-wrap align-items-center justify-content-between">
       <h4 class="page-title">Community service certificate</h4>
@@ -55,6 +56,7 @@ import { SendEmail } from '../../../shared/send-email';
           </form>
         }
       </div></div>
+      <app-audit-info type="ServiceCert" [id]="c.id" />
     } @else if (!error()) {
       <p class="text-muted">Loading…</p>
     }

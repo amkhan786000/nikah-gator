@@ -38,7 +38,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/public/**", "/actuator/health/**", "/error", "/api/auth/login", "/api/auth/verify-otp",
                         "/api/auth/forgot-password", "/api/auth/reset-password").permitAll()
                 .requestMatchers("/api/admin/**").hasRole("PLATFORM_ADMIN")
-                .requestMatchers("/api/imam/staff/**", "/api/imam/staff", "/api/imam/email-log/**", "/api/imam/email-log").hasRole("IMAM")
+                .requestMatchers("/api/imam/staff/**", "/api/imam/staff", "/api/imam/activity/**", "/api/imam/activity",
+                        "/api/imam/email-log/**", "/api/imam/email-log").hasRole("IMAM")
                 .requestMatchers("/api/imam/**").hasAnyRole("IMAM", "STAFF")
                 .anyRequest().authenticated());
         return http.build();

@@ -1,5 +1,6 @@
 package org.nikahgator.entity;
 
+import org.nikahgator.audit.Auditable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -10,7 +11,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "payments")
 @Getter @Setter
-public class Payment {
+public class Payment extends Auditable {
     public static final String FEE = "FEE";
     public static final String DONATION = "DONATION";
     public static final String PAID = "PAID";
@@ -64,6 +65,4 @@ public class Payment {
     @Column(name = "status_changed_at")
     private LocalDateTime statusChangedAt;
 
-    @Column(name = "created_at", insertable = false, updatable = false)
-    private LocalDateTime createdAt;
 }

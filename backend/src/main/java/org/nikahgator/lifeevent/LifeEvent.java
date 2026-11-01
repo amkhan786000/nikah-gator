@@ -1,5 +1,6 @@
 package org.nikahgator.lifeevent;
 
+import org.nikahgator.audit.Auditable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -12,7 +13,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "life_events")
 @Getter @Setter
-public class LifeEvent {
+public class LifeEvent extends Auditable {
     public static final String VALID = "VALID";
     public static final String VOID = "VOID";
 
@@ -66,8 +67,4 @@ public class LifeEvent {
     private LocalDateTime voidedAt;
     @Column(name = "voided_by")
     private Long voidedBy;
-    @Column(name = "created_by")
-    private Long createdBy;
-    @Column(name = "created_at", insertable = false, updatable = false)
-    private LocalDateTime createdAt;
 }

@@ -1,5 +1,6 @@
 package org.nikahgator.certificate;
 
+import org.nikahgator.audit.Auditable;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.*;
@@ -10,7 +11,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "certificate_templates")
 @Getter @Setter
-public class CertificateTemplate {
+public class CertificateTemplate extends Auditable {
     public static final String DEFAULT_TITLE = "Nikah Certificate";
     public static final String DEFAULT_INTRO = "This is to certify that the marriage (nikah) of";
     public static final String DEFAULT_BODY = "{{groomName}} son of {{groomFather}} with {{brideName}} daughter of {{brideFather}} "
@@ -63,6 +64,4 @@ public class CertificateTemplate {
     @Column(name = "paper_size")
     private String paperSize = "LETTER";
 
-    @Column(name = "updated_at", insertable = false, updatable = false)
-    private LocalDateTime updatedAt;
 }
