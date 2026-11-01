@@ -1,0 +1,8 @@
+# Add this block to the shared Caddyfile on the Contabo server (the one in /opt/rahbar, see ba/deploy/Caddyfile),
+# replacing the domain, then recreate Caddy. The nikahgator-frontend container joins Caddy's network
+# (CADDY_NETWORK=rahbar_default), so Caddy reaches it by container name.
+nikahgator.example.org {
+	import secure
+	encode gzip
+	reverse_proxy nikahgator-frontend:80
+}
