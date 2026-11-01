@@ -91,7 +91,7 @@ interface Content {
         <div class="mt-3">
           <button class="btn btn-outline-primary btn-responsive" (click)="showing.set(!showing())">
             <i class="mdi" [class]="showing() ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"></i>
-            {{ showing() ? 'Hide certificate' : 'View certificate' }}
+            {{ showing() ? 'Hide ' + noun() : 'View ' + noun() }}
           </button>
         </div>
       }
@@ -143,6 +143,11 @@ export class NikahCertificate {
       this.status();
       untracked(() => this.load());
     });
+  }
+
+  /** "Preview" until a valid certificate has been issued for a completed nikah. */
+  noun(): string {
+    return this.status() === 'COMPLETED' && this.cert()?.status === 'VALID' ? 'certificate' : 'preview';
   }
 
   lines(text: string): string[] {
