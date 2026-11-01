@@ -87,9 +87,17 @@ interface Content {
           </form>
         }
       }
+      @if (!loading() && content()) {
+        <div class="mt-3">
+          <button class="btn btn-outline-primary btn-responsive" (click)="showing.set(!showing())">
+            <i class="mdi" [class]="showing() ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"></i>
+            {{ showing() ? 'Hide ' + noun() : 'View ' + noun() }}
+          </button>
+        </div>
+      }
     </div></div>
 
-    @if (content(); as c) {
+    @if (showing() && content(); as c) {
       <div class="certificate cert-doc" [class.is-preview]="c.watermark" [style.border-color]="c.accentColor"
            (contextmenu)="c.watermark && $event.preventDefault()">
         @if (c.watermark) { <div class="cert-watermark" aria-hidden="true">PREVIEW - NOT VALID</div> }
@@ -119,6 +127,8 @@ export class NikahCertificate {
   content = signal<Content | null>(null);
   loading = signal(true);
   busy = signal(false);
+  /** The certificate itself is shown only when the imam asks for it. */
+  showing = signal(false);
   voiding = signal(false);
   error = signal('');
   reason = '';
@@ -135,12 +145,19 @@ export class NikahCertificate {
     });
   }
 
+  /** "Preview" until a valid certificate has been issued for a completed nikah. */
+  noun(): string {
+    return this.status() === 'COMPLETED' && this.cert()?.status === 'VALID' ? 'certificate' : 'preview';
+  }
+
   lines(text: string): string[] {
     return (text ?? '').split(/\r?\n/);
   }
 
   print() {
-    window.print();
+    // only the certificate prints, so it has to be on the page first
+    this.showing.set(true);
+    setTimeout(() => window.print(), 100);
   }
 
   private load() {
