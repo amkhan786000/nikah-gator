@@ -66,11 +66,23 @@ export const routes: Routes = [
       //
       // svc-route:community-service
       //
-      // svc-route:janazah
+      {
+        path: 'imam/svc/janazah',
+        canActivate: [roleGuard('IMAM'), serviceGuard('JANAZAH')],
+        loadComponent: () => import('./pages/svc/janazah/janazah').then((m) => m.Janazah),
+      },
       //
-      // svc-route:shahada
+      {
+        path: 'imam/svc/shahada',
+        canActivate: [roleGuard('IMAM'), serviceGuard('SHAHADA')],
+        loadComponent: () => import('./pages/svc/shahada/shahada').then((m) => m.Shahada),
+      },
       //
-      // svc-route:baby-naming
+      {
+        path: 'imam/svc/baby-naming',
+        canActivate: [roleGuard('IMAM'), serviceGuard('BABY_NAMING')],
+        loadComponent: () => import('./pages/svc/baby-naming/baby-naming').then((m) => m.BabyNaming),
+      },
       //
       {
         path: 'imam/svc/counseling',
