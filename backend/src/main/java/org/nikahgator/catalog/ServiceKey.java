@@ -14,10 +14,10 @@ public enum ServiceKey {
             "Register nikahs, checklist, documents, fees, reminders and the nikah certificate.", "mdi-ring", true, true),
     // ---
     JUMA_LETTER("juma", "Juma request letters",
-            "Letters for schools to excuse students for Friday (Juma) prayer.", "mdi-school-outline", true, false),
+            "Letters for schools to excuse students for Friday (Juma) prayer.", "mdi-school-outline", true, true),
     // ---
     COMMUNITY_SERVICE("community-service", "Community service certificates",
-            "Certificates of service hours for students and volunteers.", "mdi-hand-heart", true, false),
+            "Certificates of service hours for students and volunteers.", "mdi-hand-heart", true, true),
     // ---
     JANAZAH("janazah", "Janazah (funeral) records",
             "Record funeral prayers and issue a letter for the family.", "mdi-flower-outline", true, true),

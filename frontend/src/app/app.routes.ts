@@ -62,9 +62,47 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/certificate-designer').then((m) => m.CertificateDesigner),
       },
       // Each service adds its own routes by replacing its anchor line below (path 'imam/svc/<slug>', serviceGuard).
-      // svc-route:juma
+      {
+        path: 'imam/svc/juma',
+        canActivate: [roleGuard('IMAM'), serviceGuard('JUMA_LETTER')],
+        loadComponent: () => import('./pages/svc/juma/juma-list').then((m) => m.JumaList),
+      },
+      {
+        path: 'imam/svc/juma/new',
+        canActivate: [roleGuard('IMAM'), serviceGuard('JUMA_LETTER')],
+        loadComponent: () => import('./pages/svc/juma/juma-form').then((m) => m.JumaForm),
+      },
+      {
+        path: 'imam/svc/juma/:id/edit',
+        canActivate: [roleGuard('IMAM'), serviceGuard('JUMA_LETTER')],
+        loadComponent: () => import('./pages/svc/juma/juma-form').then((m) => m.JumaForm),
+      },
+      {
+        path: 'imam/svc/juma/:id',
+        canActivate: [roleGuard('IMAM'), serviceGuard('JUMA_LETTER')],
+        loadComponent: () => import('./pages/svc/juma/juma-view').then((m) => m.JumaView),
+      },
       //
-      // svc-route:community-service
+      {
+        path: 'imam/svc/community-service',
+        canActivate: [roleGuard('IMAM'), serviceGuard('COMMUNITY_SERVICE')],
+        loadComponent: () => import('./pages/svc/community-service/cs-list').then((m) => m.CsList),
+      },
+      {
+        path: 'imam/svc/community-service/new',
+        canActivate: [roleGuard('IMAM'), serviceGuard('COMMUNITY_SERVICE')],
+        loadComponent: () => import('./pages/svc/community-service/cs-form').then((m) => m.CsForm),
+      },
+      {
+        path: 'imam/svc/community-service/:id/edit',
+        canActivate: [roleGuard('IMAM'), serviceGuard('COMMUNITY_SERVICE')],
+        loadComponent: () => import('./pages/svc/community-service/cs-form').then((m) => m.CsForm),
+      },
+      {
+        path: 'imam/svc/community-service/:id',
+        canActivate: [roleGuard('IMAM'), serviceGuard('COMMUNITY_SERVICE')],
+        loadComponent: () => import('./pages/svc/community-service/cs-view').then((m) => m.CsView),
+      },
       //
       {
         path: 'imam/svc/janazah',
