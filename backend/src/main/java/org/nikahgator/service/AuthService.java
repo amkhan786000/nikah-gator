@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.nikahgator.audit.Actor;
+import org.nikahgator.audit.ActivityLogService;
 import org.nikahgator.dto.AuthDtos.*;
 import org.nikahgator.entity.AppUser;
 import org.nikahgator.entity.LoginOtp;
@@ -42,13 +44,15 @@ public class AuthService {
     private final JwtService jwt;
     private final EmailService email;
     private final TrustedDeviceService devices;
+    private final ActivityLogService activity;
 
     /** Local testing only (LOG_OTP=true): print codes in the backend log so sign-in works without SMTP. */
     @Value("${app.mail.log-otp:false}")
     private boolean logOtp;
 
     public AuthService(AppUserRepository users, LoginOtpRepository otps, PasswordResetCodeRepository resetCodes,
-                       PasswordEncoder encoder, JwtService jwt, EmailService email, TrustedDeviceService devices) {
+                       PasswordEncoder encoder, JwtService jwt, EmailService email, TrustedDeviceService devices,
+                       ActivityLogService activity) {
         this.users = users;
         this.otps = otps;
         this.resetCodes = resetCodes;
@@ -56,6 +60,7 @@ public class AuthService {
         this.jwt = jwt;
         this.email = email;
         this.devices = devices;
+        this.activity = activity;
     }
 
     private Optional<AppUser> find(String address) {
@@ -68,19 +73,26 @@ public class AuthService {
 
     /** Password check, then the emailed code, unless {@code deviceToken} is this user's remembered, unexpired browser. */
     public AuthResponse login(LoginRequest req, String ip, String deviceToken) {
-        AppUser user = find(req.email()).orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Invalid email or password"));
+        AppUser user = find(req.email()).orElseThrow(() -> {
+            String tried = req.email() == null ? "" : req.email().trim();
+            activity.record(null, ActivityLogService.LOGIN_FAILED, null, "AppUser", null,
+                    "Failed sign-in: no account for \"" + (tried.length() > 100 ? tried.substring(0, 100) : tried) + "\"", null);
+            return new ApiException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
+        });
         requireNotLocked(user);
         if (!user.isEnabled()) {
+            loginFailed(user, "Failed sign-in: the account is inactive");
             throw new ApiException(HttpStatus.FORBIDDEN, "Your account is inactive. Please contact the administrator.");
         }
         if (req.password() == null || !encoder.matches(req.password(), user.getPasswordHash())) {
+            loginFailed(user, "Failed sign-in: wrong password");
             registerFailure(user);
             throw new ApiException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
         }
         clearFailures(user);
 
         if (devices.isTrusted(user.getId(), deviceToken, ip)) {
-            return issueToken(user);
+            return issueToken(user, "Signed in (remembered device)");
         }
 
         // Only the newest code works.
@@ -118,6 +130,7 @@ public class AuthService {
             if (otp.getAttempts() >= MAX_ATTEMPTS) {
                 otp.setUsed(true);
             }
+            loginFailed(user, "Failed sign-in: wrong code");
             otps.save(otp);
             registerFailure(user);
             throw invalid;
@@ -125,11 +138,12 @@ public class AuthService {
         otp.setUsed(true);
         otps.save(otp);
         clearFailures(user);
-        return issueToken(user);
+        return issueToken(user, "Signed in");
     }
 
     private void requireNotLocked(AppUser user) {
         if (user.getLockedUntil() != null && user.getLockedUntil().isAfter(LocalDateTime.now())) {
+            loginFailed(user, "Failed sign-in: the account is locked");
             long minutes = Math.max(1, Duration.between(LocalDateTime.now(), user.getLockedUntil()).toMinutes() + 1);
             throw new ApiException(HttpStatus.LOCKED, "Too many failed attempts. Try again in " + minutes
                     + " minute(s), or reset your password with \"Forgot password\".");
@@ -141,6 +155,7 @@ public class AuthService {
         if (failures >= MAX_ATTEMPTS) {
             user.setFailedAttempts(0);
             user.setLockedUntil(LocalDateTime.now().plusMinutes(LOCK_MINUTES));
+            loginFailed(user, "Account locked for " + LOCK_MINUTES + " minutes after " + MAX_ATTEMPTS + " failed attempts");
         } else {
             user.setFailedAttempts(failures);
         }
@@ -155,7 +170,12 @@ public class AuthService {
         }
     }
 
-    private AuthResponse issueToken(AppUser user) {
+    private void loginFailed(AppUser user, String why) {
+        activity.record(Actor.of(user), ActivityLogService.LOGIN_FAILED, user.getMasjidId(), "AppUser", user.getId(), why, null);
+    }
+
+    private AuthResponse issueToken(AppUser user, String how) {
+        activity.record(Actor.of(user), ActivityLogService.LOGIN, user.getMasjidId(), "AppUser", user.getId(), how, null);
         String token = jwt.generateToken(user.getId(), Map.of("role", user.getRole(), "name", user.getFullName()));
         return new AuthResponse(false, user.getId(), null, token, user.getFullName(), user.getRole(), user.getMasjidId(),
                 user.isMustChangePassword(), devices.rememberDays());
@@ -210,7 +230,7 @@ public class AuthService {
         user.setMustChangePassword(false);
         user.setFailedAttempts(0);
         user.setLockedUntil(null); // proving access to the mailbox also lifts a sign-in lock
-        users.save(user);
+        Actor.runAs(user, () -> users.save(user)); // nobody is signed in: the change is attributed to the account owner
         devices.forgetAll(user.getId()); // a new password: every browser must use a code again
         email.send(user.getEmail(), "Your Masjidly password was changed",
                 "Your password was reset using \"Forgot password\". If this wasn't you, contact the administrator straight away.");

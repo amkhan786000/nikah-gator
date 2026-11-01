@@ -1,5 +1,6 @@
 package org.nikahgator.entity;
 
+import org.nikahgator.audit.Auditable;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -7,7 +8,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "staff_permissions")
 @Getter @Setter
-public class StaffPermission {
+public class StaffPermission extends Auditable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

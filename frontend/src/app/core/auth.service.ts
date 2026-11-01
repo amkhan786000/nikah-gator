@@ -85,6 +85,8 @@ export class AuthService {
   }
 
   logout(): void {
+    // best effort: tell the server so the activity log shows the sign-out
+    if (this.token()) this.http.post('/api/auth/logout', {}).subscribe({ error: () => {} });
     this.setToken(null);
     this.me.set(null);
     this.catalog.clear();

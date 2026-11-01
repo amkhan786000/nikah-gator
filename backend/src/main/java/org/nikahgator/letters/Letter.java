@@ -1,5 +1,6 @@
 package org.nikahgator.letters;
 
+import org.nikahgator.audit.Auditable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -10,7 +11,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "letters")
 @Getter @Setter
-public class Letter {
+public class Letter extends Auditable {
     public static final String ISSUED = "ISSUED";
     public static final String VOID = "VOID";
 
@@ -52,12 +53,6 @@ public class Letter {
     @Column(name = "voided_by")
     private Long voidedBy;
 
-    @Column(name = "created_by")
-    private Long createdBy;
 
-    @Column(name = "created_at", insertable = false, updatable = false)
-    private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", insertable = false, updatable = false)
-    private LocalDateTime updatedAt;
 }

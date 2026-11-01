@@ -1,5 +1,6 @@
 package org.nikahgator.entity;
 
+import org.nikahgator.audit.Auditable;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,7 +9,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "nikah_fees")
 @Getter @Setter
-public class NikahFee {
+public class NikahFee extends Auditable {
     @Id
     @Column(name = "request_id")
     private Long requestId;
@@ -21,6 +22,8 @@ public class NikahFee {
     @Column(name = "waived_reason")
     private String waivedReason;
 
-    @Column(name = "updated_by")
-    private Long updatedBy;
+    /** The id Auditable reports in the activity log. */
+    public Long getId() {
+        return requestId;
+    }
 }

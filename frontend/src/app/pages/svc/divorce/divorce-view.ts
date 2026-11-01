@@ -1,3 +1,4 @@
+import { AuditInfoView } from '../../../shared/audit-info';
 import { HttpClient } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
@@ -9,7 +10,7 @@ import { DIVORCE_API, Divorce, talaqLabel, typeLabel } from './divorce.model';
 
 @Component({
   selector: 'app-divorce-view',
-  imports: [FormsModule, RouterLink, DatePipe],
+  imports: [AuditInfoView, FormsModule, RouterLink, DatePipe],
   template: `
     <div class="page-title-box d-flex flex-wrap align-items-center justify-content-between">
       <h4 class="page-title">Divorce record</h4>
@@ -61,6 +62,7 @@ import { DIVORCE_API, Divorce, talaqLabel, typeLabel } from './divorce.model';
           </form>
         }
       </div></div>
+      <app-audit-info type="Divorce" [id]="d.id" />
     } @else if (!error()) {
       <p class="text-muted">Loading…</p>
     }

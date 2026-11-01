@@ -1,5 +1,6 @@
 package org.nikahgator.entity;
 
+import org.nikahgator.audit.Auditable;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.*;
@@ -9,7 +10,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "masjids")
 @Getter @Setter
-public class Masjid {
+public class Masjid extends Auditable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -35,6 +36,4 @@ public class Masjid {
 
     private boolean active = true;
 
-    @Column(name = "created_at", insertable = false, updatable = false)
-    private LocalDateTime createdAt;
 }

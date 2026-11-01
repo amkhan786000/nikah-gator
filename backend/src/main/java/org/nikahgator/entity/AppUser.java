@@ -1,5 +1,7 @@
 package org.nikahgator.entity;
 
+import org.nikahgator.audit.AuditIgnore;
+import org.nikahgator.audit.Auditable;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.*;
@@ -9,7 +11,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "app_users")
 @Getter @Setter
-public class AppUser {
+public class AppUser extends Auditable {
     public static final String PLATFORM_ADMIN = "PLATFORM_ADMIN";
     public static final String IMAM = "IMAM";
     public static final String COUPLE = "COUPLE";
@@ -42,11 +44,11 @@ public class AppUser {
     private boolean mustChangePassword;
 
     @Column(name = "failed_attempts")
+    @AuditIgnore
     private int failedAttempts;
 
     @Column(name = "locked_until")
+    @AuditIgnore
     private LocalDateTime lockedUntil;
 
-    @Column(name = "created_at", insertable = false, updatable = false)
-    private LocalDateTime createdAt;
 }

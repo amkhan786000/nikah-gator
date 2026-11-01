@@ -1,5 +1,6 @@
 package org.nikahgator.entity;
 
+import org.nikahgator.audit.Auditable;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,7 +9,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "masjids")
 @Getter @Setter
-public class MasjidReminderSettings {
+public class MasjidReminderSettings extends Auditable {
     @Id
     private Long id;
 

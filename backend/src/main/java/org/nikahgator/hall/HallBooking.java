@@ -1,5 +1,6 @@
 package org.nikahgator.hall;
 
+import org.nikahgator.audit.Auditable;
 import java.time.LocalDateTime;
 import java.util.Set;
 
@@ -10,7 +11,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "hall_bookings")
 @Getter @Setter
-public class HallBooking {
+public class HallBooking extends Auditable {
     public static final String REQUESTED = "REQUESTED";
     public static final String CONFIRMED = "CONFIRMED";
     public static final String CANCELLED = "CANCELLED";

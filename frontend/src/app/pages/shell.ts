@@ -101,7 +101,8 @@ export class Shell {
 
   links(): NavLink[] {
     if (this.auth.me()?.role === 'PLATFORM_ADMIN') {
-      return [{ path: '/admin/masjids', label: 'Masjids', icon: 'mdi-home-city-outline' }];
+      return [{ path: '/admin/masjids', label: 'Masjids', icon: 'mdi-home-city-outline' },
+        { path: '/admin/activity', label: 'Activity log', icon: 'mdi-history' }];
     }
     // Only what the platform admin has switched on for this imam (null while loading).
     const on = this.catalog.services() ?? [];
@@ -121,7 +122,8 @@ export class Shell {
       }
     }
     if (this.auth.me()?.role === 'IMAM') {
-      links.push({ path: '/imam/staff', label: 'Team', icon: 'mdi-account-multiple-outline' });
+      links.push({ path: '/imam/staff', label: 'Team', icon: 'mdi-account-multiple-outline' },
+        { path: '/imam/activity', label: 'Activity log', icon: 'mdi-history' });
     }
     return links;
   }
@@ -156,6 +158,7 @@ export class Shell {
     if (u.startsWith('/admin/masjids')) return 'Masjids';
     if (u.startsWith('/imam/not-available')) return 'Not available';
     if (u.startsWith('/imam/staff')) return 'Team';
+    if (u.startsWith('/imam/activity') || u.startsWith('/admin/activity')) return 'Activity log';
     if (u.startsWith('/profile')) return 'My profile';
     const svc = /^\/imam\/svc\/([^/]+)/.exec(u);
     if (svc) return this.catalog.services()?.find((x) => x.slug === svc[1])?.label ?? '';

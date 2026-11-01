@@ -1,5 +1,6 @@
 package org.nikahgator.entity;
 
+import org.nikahgator.audit.Auditable;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.*;
@@ -9,7 +10,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "checklist_items")
 @Getter @Setter
-public class ChecklistItem {
+public class ChecklistItem extends Auditable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

@@ -1,5 +1,6 @@
 package org.nikahgator.juma;
 
+import org.nikahgator.audit.Auditable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -14,7 +15,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "juma_letters")
 @Getter @Setter
-public class JumaLetter {
+public class JumaLetter extends Auditable {
     public static final String ACTIVE = "ACTIVE";
     public static final String VOID = "VOID";
 
@@ -66,8 +67,6 @@ public class JumaLetter {
     @Column(name = "voided_by")
     private Long voidedBy;
 
-    @Column(name = "created_by")
-    private Long createdBy;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "juma_letter_students", joinColumns = @JoinColumn(name = "letter_id"))

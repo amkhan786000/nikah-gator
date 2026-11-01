@@ -1,5 +1,6 @@
 package org.nikahgator.entity;
 
+import org.nikahgator.audit.Auditable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -10,7 +11,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "certificates")
 @Getter @Setter
-public class Certificate {
+public class Certificate extends Auditable {
     public static final String VALID = "VALID";
     public static final String VOID = "VOID";
 

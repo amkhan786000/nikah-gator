@@ -1,3 +1,4 @@
+import { AuditInfoView } from '../../../shared/audit-info';
 import { HttpClient } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
@@ -10,7 +11,7 @@ import { JUMA_API, JumaLetter, clock } from './juma.model';
 
 @Component({
   selector: 'app-juma-view',
-  imports: [FormsModule, RouterLink, DatePipe, CardTableDirective],
+  imports: [AuditInfoView, FormsModule, RouterLink, DatePipe, CardTableDirective],
   template: `
     <div class="page-title-box d-flex flex-wrap align-items-center justify-content-between">
       <h4 class="page-title">Juma letter</h4>
@@ -62,6 +63,7 @@ import { JUMA_API, JumaLetter, clock } from './juma.model';
           </form>
         }
       </div></div>
+      <app-audit-info type="JumaLetter" [id]="l.id" />
     } @else if (!error()) {
       <p class="text-muted">Loading…</p>
     }
