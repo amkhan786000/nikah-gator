@@ -76,7 +76,21 @@ export const routes: Routes = [
       //
       // svc-route:hall-booking
       //
-      // svc-route:letters
+      {
+        path: 'imam/svc/letters',
+        canActivate: [roleGuard('IMAM'), serviceGuard('GENERAL_LETTER')],
+        loadComponent: () => import('./pages/svc/letters/letters-list').then((m) => m.LettersList),
+      },
+      {
+        path: 'imam/svc/letters/new',
+        canActivate: [roleGuard('IMAM'), serviceGuard('GENERAL_LETTER')],
+        loadComponent: () => import('./pages/svc/letters/letter-editor').then((m) => m.LetterEditor),
+      },
+      {
+        path: 'imam/svc/letters/:id',
+        canActivate: [roleGuard('IMAM'), serviceGuard('GENERAL_LETTER')],
+        loadComponent: () => import('./pages/svc/letters/letter-editor').then((m) => m.LetterEditor),
+      },
       //
       { path: '', pathMatch: 'full', loadComponent: () => import('./pages/home-redirect').then((m) => m.HomeRedirect) },
     ],

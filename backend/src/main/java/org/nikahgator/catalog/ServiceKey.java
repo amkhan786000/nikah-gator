@@ -35,7 +35,7 @@ public enum ServiceKey {
             "Bookings of the masjid hall and events, without double-booking.", "mdi-calendar-check-outline", true, false),
     // ---
     GENERAL_LETTER("letters", "General letters",
-            "Character references, no-objection and other letters on masjid letterhead.", "mdi-email-newsletter", true, false);
+            "Character references, no-objection and other letters on masjid letterhead.", "mdi-email-newsletter", true, true);
 
     private final String slug;
     private final String label;
