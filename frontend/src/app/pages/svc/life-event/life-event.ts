@@ -16,7 +16,7 @@ type Bag = Record<string, string | null>;
     <div class="page-title-box d-flex flex-wrap align-items-center justify-content-between">
       <h4 class="page-title"><i class="mdi {{ cfg().icon }}"></i> {{ cfg().title }}</h4>
       @if (!editing()) {
-        <button class="btn btn-primary btn-responsive" (click)="add()"><i class="mdi mdi-plus"></i> New {{ cfg().singular }}</button>
+        <button class="btn btn-primary btn-responsive needs-manage" (click)="add()"><i class="mdi mdi-plus"></i> New {{ cfg().singular }}</button>
       }
     </div>
     @if (error()) { <div class="alert alert-danger">{{ error() }}</div> }

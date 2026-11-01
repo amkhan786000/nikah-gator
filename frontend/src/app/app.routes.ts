@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, guestGuard, roleGuard, serviceGuard } from './core/guards';
+import { authGuard, guestGuard, imamOnlyGuard, roleGuard, serviceGuard } from './core/guards';
 
 export const routes: Routes = [
   { path: 'login', canActivate: [guestGuard], loadComponent: () => import('./pages/login').then((m) => m.Login) },
@@ -11,6 +11,22 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/shell').then((m) => m.Shell),
     children: [
       { path: 'change-password', loadComponent: () => import('./pages/change-password').then((m) => m.ChangePassword) },
+      { path: 'profile', loadComponent: () => import('./pages/profile').then((m) => m.ProfilePage) },
+      {
+        path: 'imam/staff',
+        canActivate: [imamOnlyGuard],
+        loadComponent: () => import('./pages/team/staff-list').then((m) => m.StaffList),
+      },
+      {
+        path: 'imam/staff/new',
+        canActivate: [imamOnlyGuard],
+        loadComponent: () => import('./pages/team/staff-form').then((m) => m.StaffForm),
+      },
+      {
+        path: 'imam/staff/:id',
+        canActivate: [imamOnlyGuard],
+        loadComponent: () => import('./pages/team/staff-form').then((m) => m.StaffForm),
+      },
       {
         path: 'admin/masjids',
         canActivate: [roleGuard('PLATFORM_ADMIN')],

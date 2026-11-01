@@ -68,6 +68,8 @@ public class AuthController {
         out.put("email", user.getEmail());
         out.put("name", user.getFullName());
         out.put("role", user.getRole());
+        out.put("phone", user.getPhone());
+        out.put("jobTitle", user.getJobTitle());
         out.put("mustChangePassword", user.isMustChangePassword());
         if (user.getMasjidId() != null) {
             masjids.findById(user.getMasjidId()).ifPresent(m -> {

@@ -3,6 +3,7 @@ package org.nikahgator.config;
 import java.util.List;
 
 import org.nikahgator.repository.AppUserRepository;
+import org.nikahgator.repository.MasjidRepository;
 import org.nikahgator.security.JwtAuthFilter;
 import org.nikahgator.security.JwtService;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,18 +27,19 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
     @Bean
-    SecurityFilterChain filterChain(HttpSecurity http, JwtService jwt, AppUserRepository users) throws Exception {
+    SecurityFilterChain filterChain(HttpSecurity http, JwtService jwt, AppUserRepository users, MasjidRepository masjids) throws Exception {
         // Stateless API: a signed JWT in the Authorization header identifies the user.
         http.csrf(AbstractHttpConfigurer::disable)
             .cors(Customizer.withDefaults())
             .sessionManagement(m -> m.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
-            .addFilterBefore(new JwtAuthFilter(jwt, users), UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(new JwtAuthFilter(jwt, users, masjids), UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(a -> a
                 .requestMatchers("/api/public/**", "/actuator/health/**", "/error", "/api/auth/login", "/api/auth/verify-otp",
                         "/api/auth/forgot-password", "/api/auth/reset-password").permitAll()
                 .requestMatchers("/api/admin/**").hasRole("PLATFORM_ADMIN")
-                .requestMatchers("/api/imam/**").hasRole("IMAM")
+                .requestMatchers("/api/imam/staff/**", "/api/imam/staff").hasRole("IMAM")
+                .requestMatchers("/api/imam/**").hasAnyRole("IMAM", "STAFF")
                 .anyRequest().authenticated());
         return http.build();
     }

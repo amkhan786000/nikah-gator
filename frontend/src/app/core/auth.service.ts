@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { CatalogService } from './catalog.service';
 
-export type Role = 'PLATFORM_ADMIN' | 'IMAM' | 'COUPLE';
+export type Role = 'PLATFORM_ADMIN' | 'IMAM' | 'STAFF' | 'COUPLE';
 
 export interface AuthResponse {
   otpRequired: boolean;
@@ -24,6 +24,8 @@ export interface Me {
   name: string;
   role: Role;
   mustChangePassword: boolean;
+  phone?: string | null;
+  jobTitle?: string | null;
   masjidName?: string;
   masjidAddress?: string;
 }
@@ -91,7 +93,8 @@ export class AuthService {
 
   /** Where a signed-in user belongs. */
   homeFor(role: Role | undefined): string {
-    return role === 'PLATFORM_ADMIN' ? '/admin/masjids' : '/imam/nikahs';
+    // imam and staff: the home page picks the first service they may use
+    return role === 'PLATFORM_ADMIN' ? '/admin/masjids' : '/';
   }
 
   private accept(r: AuthResponse): void {

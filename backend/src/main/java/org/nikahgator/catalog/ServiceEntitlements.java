@@ -8,9 +8,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.nikahgator.entity.AppUser;
+import org.nikahgator.entity.StaffPermission;
 import org.nikahgator.exception.ApiException;
 import org.nikahgator.repository.AppUserRepository;
 import org.nikahgator.repository.MasjidRepository;
+import org.nikahgator.repository.StaffPermissionRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,20 +30,22 @@ public class ServiceEntitlements {
     }
 
     /** One service as the imam's menu needs it. */
-    public record EnabledService(String key, String slug, String label, String icon) {
+    public record EnabledService(String key, String slug, String label, String icon, String level) {
     }
 
     private final MasjidServiceRepository masjidRows;
     private final ImamServiceRepository imamRows;
     private final MasjidRepository masjids;
     private final AppUserRepository users;
+    private final StaffPermissionRepository staffRows;
 
     public ServiceEntitlements(MasjidServiceRepository masjidRows, ImamServiceRepository imamRows,
-                               MasjidRepository masjids, AppUserRepository users) {
+                               MasjidRepository masjids, AppUserRepository users, StaffPermissionRepository staffRows) {
         this.masjidRows = masjidRows;
         this.imamRows = imamRows;
         this.masjids = masjids;
         this.users = users;
+        this.staffRows = staffRows;
     }
 
     /** The services this imam can use right now. */
@@ -60,14 +64,35 @@ public class ServiceEntitlements {
         return out;
     }
 
-    public boolean isEnabled(AppUser imam, ServiceKey key) {
-        return enabledFor(imam).contains(key);
+    /**
+     * What this signed-in user may use: an imam gets every enabled service with full access; staff get the
+     * services the imam granted, limited to what the platform admin has enabled for the masjid and its imam.
+     */
+    @Transactional(readOnly = true)
+    public Map<ServiceKey, AccessLevel> accessFor(AppUser user) {
+        Map<ServiceKey, AccessLevel> out = new java.util.EnumMap<>(ServiceKey.class);
+        if (AppUser.IMAM.equals(user.getRole())) {
+            enabledFor(user).forEach(k -> out.put(k, AccessLevel.MANAGE));
+        } else if (AppUser.STAFF.equals(user.getRole())) {
+            AppUser imam = users.findFirstByMasjidIdAndRole(user.getMasjidId(), AppUser.IMAM).orElse(null);
+            if (imam != null) {
+                Set<ServiceKey> on = enabledFor(imam);
+                for (StaffPermission p : staffRows.findByUserId(user.getId())) {
+                    AccessLevel level = AccessLevel.parse(p.getLevel());
+                    ServiceKey key = Arrays.stream(ServiceKey.values()).filter(k -> k.name().equals(p.getServiceKey())).findFirst().orElse(null);
+                    if (level != null && key != null && on.contains(key)) {
+                        out.put(key, level);
+                    }
+                }
+            }
+        }
+        return out;
     }
 
-    public List<EnabledService> menuFor(AppUser imam) {
-        Set<ServiceKey> on = enabledFor(imam);
-        return Arrays.stream(ServiceKey.values()).filter(on::contains)
-                .map(k -> new EnabledService(k.name(), k.slug(), k.label(), k.icon())).toList();
+    public List<EnabledService> menuFor(AppUser user) {
+        Map<ServiceKey, AccessLevel> access = accessFor(user);
+        return Arrays.stream(ServiceKey.values()).filter(access::containsKey)
+                .map(k -> new EnabledService(k.name(), k.slug(), k.label(), k.icon(), access.get(k).name())).toList();
     }
 
     /** Admin: every service with the masjid switch, the imam override and the result. */
