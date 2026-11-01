@@ -1,0 +1,223 @@
+package org.nikahgator.service;
+
+import java.security.SecureRandom;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.nikahgator.dto.AuthDtos.*;
+import org.nikahgator.entity.AppUser;
+import org.nikahgator.entity.LoginOtp;
+import org.nikahgator.entity.PasswordResetCode;
+import org.nikahgator.exception.ApiException;
+import org.nikahgator.repository.AppUserRepository;
+import org.nikahgator.repository.LoginOtpRepository;
+import org.nikahgator.repository.PasswordResetCodeRepository;
+import org.nikahgator.security.JwtService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+/** Sign-in (password, then an e-mailed code), forgot/reset password and password change. */
+@Service
+public class AuthService {
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
+    private static final SecureRandom RANDOM = new SecureRandom();
+
+    public static final int MAX_ATTEMPTS = 5;
+    static final int LOCK_MINUTES = 15;
+    static final int OTP_MINUTES = 5;
+    static final int RESET_CODE_MINUTES = 15;
+    static final int RESET_CODES_PER_HOUR = 3;
+
+    private final AppUserRepository users;
+    private final LoginOtpRepository otps;
+    private final PasswordResetCodeRepository resetCodes;
+    private final PasswordEncoder encoder;
+    private final JwtService jwt;
+    private final EmailService email;
+
+    /** Local testing only (LOG_OTP=true): print codes in the backend log so sign-in works without SMTP. */
+    @Value("${app.mail.log-otp:false}")
+    private boolean logOtp;
+
+    public AuthService(AppUserRepository users, LoginOtpRepository otps, PasswordResetCodeRepository resetCodes,
+                       PasswordEncoder encoder, JwtService jwt, EmailService email) {
+        this.users = users;
+        this.otps = otps;
+        this.resetCodes = resetCodes;
+        this.encoder = encoder;
+        this.jwt = jwt;
+        this.email = email;
+    }
+
+    private Optional<AppUser> find(String address) {
+        return address == null || address.isBlank() ? Optional.empty() : users.findByEmailIgnoreCase(address.trim());
+    }
+
+    private static String sixDigits() {
+        return String.format("%06d", RANDOM.nextInt(1_000_000));
+    }
+
+    public AuthResponse login(LoginRequest req) {
+        AppUser user = find(req.email()).orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Invalid email or password"));
+        requireNotLocked(user);
+        if (!user.isEnabled()) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "Your account is inactive. Please contact the administrator.");
+        }
+        if (req.password() == null || !encoder.matches(req.password(), user.getPasswordHash())) {
+            registerFailure(user);
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
+        }
+        clearFailures(user);
+
+        // Only the newest code works.
+        List<LoginOtp> open = otps.findByUserIdAndUsedFalse(user.getId());
+        open.forEach(o -> o.setUsed(true));
+        otps.saveAll(open);
+
+        String code = sixDigits();
+        LoginOtp otp = new LoginOtp();
+        otp.setUserId(user.getId());
+        otp.setCodeHash(encoder.encode(code));
+        otps.save(otp);
+        email.send(user.getEmail(), "Your Nikah Gator sign-in code",
+                "Assalamu alaikum " + user.getFullName() + ",\n\nYour sign-in code is " + code + ". It is valid for "
+                        + OTP_MINUTES + " minutes.\n\nIf you did not try to sign in, please ignore this e-mail.", code);
+        if (logOtp) {
+            log.warn("LOG_OTP is on: sign-in code for {} is {}", user.getEmail(), code);
+        }
+        return AuthResponse.otpNeeded(user.getId(), "A code has been sent to your email. Please enter it to continue.");
+    }
+
+    public AuthResponse verifyOtp(OtpVerifyRequest req) {
+        ApiException invalid = new ApiException(HttpStatus.BAD_REQUEST, "Invalid code. Please try again.");
+        AppUser user = (req.id() == null ? Optional.<AppUser>empty() : users.findById(req.id())).orElseThrow(() -> invalid);
+        requireNotLocked(user);
+        LoginOtp otp = otps.findFirstByUserIdAndUsedFalseOrderByIdDesc(user.getId()).orElseThrow(() -> invalid);
+        if (otp.getCreatedAt().plusMinutes(OTP_MINUTES).isBefore(LocalDateTime.now())) {
+            otp.setUsed(true);
+            otps.save(otp);
+            throw new ApiException(HttpStatus.BAD_REQUEST, "The code has expired. Please sign in again.");
+        }
+        String code = req.otp() == null ? "" : req.otp().trim();
+        if (!encoder.matches(code, otp.getCodeHash())) {
+            otp.setAttempts(otp.getAttempts() + 1);
+            if (otp.getAttempts() >= MAX_ATTEMPTS) {
+                otp.setUsed(true);
+            }
+            otps.save(otp);
+            registerFailure(user);
+            throw invalid;
+        }
+        otp.setUsed(true);
+        otps.save(otp);
+        clearFailures(user);
+        return issueToken(user);
+    }
+
+    private void requireNotLocked(AppUser user) {
+        if (user.getLockedUntil() != null && user.getLockedUntil().isAfter(LocalDateTime.now())) {
+            long minutes = Math.max(1, Duration.between(LocalDateTime.now(), user.getLockedUntil()).toMinutes() + 1);
+            throw new ApiException(HttpStatus.LOCKED, "Too many failed attempts. Try again in " + minutes
+                    + " minute(s), or reset your password with \"Forgot password\".");
+        }
+    }
+
+    private void registerFailure(AppUser user) {
+        int failures = user.getFailedAttempts() + 1;
+        if (failures >= MAX_ATTEMPTS) {
+            user.setFailedAttempts(0);
+            user.setLockedUntil(LocalDateTime.now().plusMinutes(LOCK_MINUTES));
+        } else {
+            user.setFailedAttempts(failures);
+        }
+        users.save(user);
+    }
+
+    private void clearFailures(AppUser user) {
+        if (user.getFailedAttempts() > 0 || user.getLockedUntil() != null) {
+            user.setFailedAttempts(0);
+            user.setLockedUntil(null);
+            users.save(user);
+        }
+    }
+
+    private AuthResponse issueToken(AppUser user) {
+        String token = jwt.generateToken(user.getId(), Map.of("role", user.getRole(), "name", user.getFullName()));
+        return new AuthResponse(false, user.getId(), null, token, user.getFullName(), user.getRole(), user.getMasjidId(),
+                user.isMustChangePassword());
+    }
+
+    /** Emails a reset code. Says nothing about whether the address has an account. */
+    public void requestPasswordReset(String address) {
+        Optional<AppUser> found = find(address);
+        if (found.isEmpty() || !found.get().isEnabled()) {
+            return;
+        }
+        AppUser user = found.get();
+        if (resetCodes.countByUserIdAndCreatedAtAfter(user.getId(), LocalDateTime.now().minusHours(1)) >= RESET_CODES_PER_HOUR) {
+            return;
+        }
+        List<PasswordResetCode> open = resetCodes.findByUserIdAndUsedFalse(user.getId());
+        open.forEach(c -> c.setUsed(true));
+        resetCodes.saveAll(open);
+
+        String code = sixDigits();
+        PasswordResetCode reset = new PasswordResetCode();
+        reset.setUserId(user.getId());
+        reset.setCodeHash(encoder.encode(code));
+        reset.setExpiresAt(LocalDateTime.now().plusMinutes(RESET_CODE_MINUTES));
+        resetCodes.save(reset);
+        email.send(user.getEmail(), "Reset your Nikah Gator password",
+                "Assalamu alaikum " + user.getFullName() + ",\n\nYour password reset code is " + code + ". It is valid for "
+                        + RESET_CODE_MINUTES + " minutes.\n\nIf you did not ask for this, please ignore this e-mail.", code);
+        if (logOtp) {
+            log.warn("LOG_OTP is on: password reset code for {} is {}", user.getEmail(), code);
+        }
+    }
+
+    public void resetPassword(ResetPasswordRequest req) {
+        ApiException invalid = new ApiException(HttpStatus.BAD_REQUEST, "The code is wrong or has expired. Ask for a new code.");
+        AppUser user = find(req.email()).orElseThrow(() -> invalid);
+        PasswordResetCode reset = resetCodes.findFirstByUserIdAndUsedFalseOrderByIdDesc(user.getId())
+                .filter(c -> c.getExpiresAt().isAfter(LocalDateTime.now())).orElseThrow(() -> invalid);
+        String code = req.code() == null ? "" : req.code().trim();
+        if (!encoder.matches(code, reset.getCodeHash())) {
+            reset.setAttempts(reset.getAttempts() + 1);
+            if (reset.getAttempts() >= MAX_ATTEMPTS) {
+                reset.setUsed(true); // too many guesses: this code is void
+            }
+            resetCodes.save(reset);
+            throw invalid;
+        }
+        PasswordPolicy.check(req.newPassword(), req.confirmPassword());
+        reset.setUsed(true);
+        resetCodes.save(reset);
+        user.setPasswordHash(encoder.encode(req.newPassword()));
+        user.setMustChangePassword(false);
+        user.setFailedAttempts(0);
+        user.setLockedUntil(null); // proving access to the mailbox also lifts a sign-in lock
+        users.save(user);
+        email.send(user.getEmail(), "Your Nikah Gator password was changed",
+                "Your password was reset using \"Forgot password\". If this wasn't you, contact the administrator straight away.");
+    }
+
+    public void changePassword(AppUser user, ChangePasswordRequest req) {
+        if (req.currentPassword() == null || !encoder.matches(req.currentPassword(), user.getPasswordHash())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "The current password is wrong.");
+        }
+        PasswordPolicy.check(req.newPassword(), req.confirmPassword());
+        if (encoder.matches(req.newPassword(), user.getPasswordHash())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Choose a password different from the current one.");
+        }
+        user.setPasswordHash(encoder.encode(req.newPassword()));
+        user.setMustChangePassword(false);
+        users.save(user);
+    }
+}

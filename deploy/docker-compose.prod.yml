@@ -43,6 +43,10 @@ services:
       MAIL_USERNAME: ${MAIL_USERNAME:-}
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
       MAIL_FROM: ${MAIL_FROM:-}
+      LOG_OTP: "false"
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_NAME: ${ADMIN_NAME:-}
+      PUBLIC_URL: ${PUBLIC_URL:-http://localhost}
       CORS_ALLOWED_ORIGINS: ${PUBLIC_URL:-http://localhost}
       UPLOAD_DIR: /app/uploads
       JAVA_TOOL_OPTIONS: ${JAVA_OPTS:--Xms256m -Xmx768m}
