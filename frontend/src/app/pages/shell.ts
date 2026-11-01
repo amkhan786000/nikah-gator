@@ -86,6 +86,7 @@ export class Shell {
       : [
           { path: '/imam/nikahs', label: 'Nikahs', icon: 'mdi-book-open-page-variant' },
           { path: '/imam/settings', label: 'Masjid settings', icon: 'mdi-settings' },
+          { path: '/imam/certificate-design', label: 'Certificate design', icon: 'mdi-certificate-outline' },
         ];
   }
 
@@ -110,6 +111,7 @@ export class Shell {
     if (u.endsWith('/edit')) return 'Edit nikah';
     if (u.startsWith('/imam/nikahs/')) return 'Nikah';
     if (u.startsWith('/imam/nikahs')) return 'Nikahs';
+    if (u.startsWith('/imam/certificate-design')) return 'Certificate design';
     if (u.startsWith('/change-password')) return 'Change password';
     return '';
   }

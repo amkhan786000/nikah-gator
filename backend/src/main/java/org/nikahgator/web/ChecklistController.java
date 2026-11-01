@@ -67,8 +67,9 @@ public class ChecklistController {
     public DocumentDto upload(@AuthenticationPrincipal AppUser imam, @PathVariable Long id,
                               @RequestParam("file") MultipartFile file,
                               @RequestParam(value = "checklistId", required = false) Long checklistId,
+                              @RequestParam(value = "checklistCode", required = false) String checklistCode,
                               @RequestParam(value = "markDone", defaultValue = "true") boolean markDone) {
-        return documents.upload(imam, id, file, checklistId, markDone);
+        return documents.upload(imam, id, file, checklistId, checklistCode, markDone);
     }
 
     @GetMapping("/nikahs/{id}/documents/{docId}/download")

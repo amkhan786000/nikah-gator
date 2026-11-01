@@ -44,11 +44,12 @@ public class DocumentService {
     }
 
     @Transactional
-    public DocumentDto upload(AppUser imam, Long nikahId, MultipartFile file, Long checklistId, boolean markDone) {
+    public DocumentDto upload(AppUser imam, Long nikahId, MultipartFile file, Long checklistId, String checklistCode, boolean markDone) {
         checklist.nikahOf(imam, nikahId);
         if (file == null || file.isEmpty()) throw new ApiException(HttpStatus.BAD_REQUEST, "Choose a file to upload");
         if (file.getSize() > MAX_BYTES) throw new ApiException(HttpStatus.PAYLOAD_TOO_LARGE, "The file is larger than 25 MB");
-        ChecklistItem item = checklistId == null ? null : checklist.find(imam, nikahId, checklistId);
+        ChecklistItem item = checklistId != null ? checklist.find(imam, nikahId, checklistId)
+                : checklistCode != null && !checklistCode.isBlank() ? checklist.findByCode(imam, nikahId, checklistCode) : null;
 
         String name = sanitize(file.getOriginalFilename());
         String type;

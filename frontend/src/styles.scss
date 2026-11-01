@@ -811,3 +811,14 @@ body:has(.modal.show) .modal { overflow-x: hidden; overflow-y: auto; }
   .app-content { padding: 0 !important; }
   .certificate { box-shadow: none; border-width: 4px; min-height: 90vh; page-break-inside: avoid; }
 }
+
+/* ------------------------------------------------------------------ feature:certificates */
+.certificate.cert-doc { position: relative; overflow: hidden; }
+.certificate.cert-doc .names { font-size: 18px; margin: 4px 0; }
+.certificate.is-preview { user-select: none; -webkit-user-select: none; }
+.cert-watermark {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none;
+  font-size: clamp(26px, 8vw, 64px); font-weight: 800; color: rgba(192, 57, 43, .22); transform: rotate(-30deg);
+  text-align: center; line-height: 1.1; white-space: normal; padding: 0 8%;
+}
+@media print { .certificate.is-preview { display: none !important; } }
