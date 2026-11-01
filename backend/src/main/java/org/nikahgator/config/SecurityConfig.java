@@ -2,7 +2,14 @@ package org.nikahgator.config;
 
 import java.util.List;
 
+import org.nikahgator.repository.AppUserRepository;
+import org.nikahgator.security.JwtAuthFilter;
+import org.nikahgator.security.JwtService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -19,12 +26,16 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
     @Bean
-    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        // Stateless API; JWT authentication filter is added with the auth feature.
+    SecurityFilterChain filterChain(HttpSecurity http, JwtService jwt, AppUserRepository users) throws Exception {
+        // Stateless API: a signed JWT in the Authorization header identifies the user.
         http.csrf(AbstractHttpConfigurer::disable)
             .cors(Customizer.withDefaults())
+            .sessionManagement(m -> m.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+            .addFilterBefore(new JwtAuthFilter(jwt, users), UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(a -> a
-                .requestMatchers("/api/public/**", "/actuator/health/**").permitAll()
+                .requestMatchers("/api/public/**", "/actuator/health/**", "/api/auth/login", "/api/auth/verify-otp",
+                        "/api/auth/forgot-password", "/api/auth/reset-password").permitAll()
                 .anyRequest().authenticated());
         return http.build();
     }
