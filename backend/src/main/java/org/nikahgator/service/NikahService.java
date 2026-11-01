@@ -16,6 +16,9 @@ public class NikahService {
 
     private final NikahRequestRepository nikahs;
 
+    @org.springframework.beans.factory.annotation.Autowired // feature:reminders
+    private NikahReminderService reminders;
+
     public NikahService(NikahRequestRepository nikahs) {
         this.nikahs = nikahs;
     }
@@ -34,16 +37,21 @@ public class NikahService {
         n.setRequestedBy(imam.getId());
         n.setImamId(imam.getId());
         apply(n, in);
-        return toDto(nikahs.save(n));
+        NikahRequest saved = nikahs.save(n);
+        reminders.sync(saved, true, false); // feature:reminders
+        return toDto(saved);
     }
 
     public NikahDto update(AppUser imam, Long id, NikahDto in) {
         NikahRequest n = find(imam, id);
+        java.time.LocalDateTime oldAt = n.getScheduledAt(); // feature:reminders
         apply(n, in);
         if (in.status() != null && java.util.List.of(NikahRequest.REGISTERED, NikahRequest.COMPLETED, NikahRequest.CANCELLED).contains(in.status())) {
             n.setStatus(in.status());
         }
-        return toDto(nikahs.save(n));
+        NikahRequest saved = nikahs.save(n);
+        reminders.sync(saved, !java.util.Objects.equals(oldAt, saved.getScheduledAt()), true); // feature:reminders
+        return toDto(saved);
     }
 
     private NikahRequest find(AppUser imam, Long id) {
