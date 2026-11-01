@@ -38,7 +38,10 @@ public enum ServiceKey {
             "Character references, no-objection and other letters on masjid letterhead.", "mdi-email-newsletter", true, true),
     // ---
     DIVORCE("divorce", "Divorce records",
-            "Private religious records of divorces (talaq, khula, faskh) with a printable record.", "mdi-heart-broken", true, true);
+            "Private religious records of divorces (talaq, khula, faskh) with a printable record.", "mdi-heart-broken", true, true),
+    // ---
+    SALAH_TIMES("salah-times", "Salah timetable",
+            "Publish prayer times for your masjid and share a link people can open.", "mdi-clock-outline", true, true);
 
     private final String slug;
     private final String label;

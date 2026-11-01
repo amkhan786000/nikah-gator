@@ -5,4 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface MasjidRepository extends JpaRepository<Masjid, Long> {
     boolean existsBySlug(String slug);
+
+    java.util.Optional<Masjid> findBySlug(String slug);
 }
