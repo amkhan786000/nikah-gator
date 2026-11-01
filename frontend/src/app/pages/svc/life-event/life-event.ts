@@ -5,13 +5,14 @@ import { FormsModule } from '@angular/forms';
 import { errorMessage } from '../../../core/auth.service';
 import { CardTableDirective } from '../../../shared/card-table.directive';
 import { FieldDef, LifeEvent, LifeEventConfig } from './life-event.model';
+import { SendEmail } from '../../../shared/send-email';
 
 type Bag = Record<string, string | null>;
 
 /** List, create/edit, void and PDF (download/print) for one imam life-event service; the page config says which fields. */
 @Component({
   selector: 'app-life-event',
-  imports: [CardTableDirective, DatePipe, FormsModule],
+  imports: [CardTableDirective, DatePipe, FormsModule, SendEmail],
   template: `
     <div class="page-title-box d-flex flex-wrap align-items-center justify-content-between">
       <h4 class="page-title"><i class="mdi {{ cfg().icon }}"></i> {{ cfg().title }}</h4>
@@ -67,6 +68,9 @@ type Bag = Record<string, string | null>;
                       <button class="btn btn-sm btn-outline-primary" (click)="download(r)" [disabled]="busy()"><i class="mdi mdi-download"></i> PDF</button>
                       <button class="btn btn-sm btn-outline-secondary" (click)="print(r)" [disabled]="busy()"><i class="mdi mdi-printer"></i> Print</button>
                       @if (r.status === 'VALID') {
+                        <button class="btn btn-sm btn-outline-secondary needs-manage" (click)="emailing.set(r)"><i class="mdi mdi-email-send-outline"></i> E-mail</button>
+                      }
+                      @if (r.status === 'VALID') {
                         <button class="btn btn-sm btn-outline-primary" (click)="edit(r)">Edit</button>
                         <button class="btn btn-sm btn-outline-danger" (click)="voidIt(r)" [disabled]="busy()">Void</button>
                       }
@@ -80,6 +84,12 @@ type Bag = Record<string, string | null>;
           </table>
         </div>
       </div></div>
+      @if (emailing(); as r) {
+        <div class="card"><div class="card-body">
+          <app-send-email [inline]="true" [sensitive]="!!cfg().sensitive" [url]="base + '/' + r.id + '/email'"
+                          [noun]="r.number || 'this record'" (closed)="emailing.set(null)" />
+        </div></div>
+      }
     }
   `,
 })
@@ -102,7 +112,10 @@ export class LifeEventPage {
     return q ? this.rows().filter((r) => r.personName.toLowerCase().includes(q)) : this.rows();
   });
 
-  private get base() {
+  /** The record being e-mailed, else null. */
+  emailing = signal<LifeEvent | null>(null);
+
+  get base() {
     return `/api/imam/svc/${this.cfg().slug}`;
   }
 

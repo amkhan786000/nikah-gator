@@ -25,7 +25,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 /** Issues, voids and renders certificates. Every imam call is limited to the imam's own masjid. */
 @Service
-public class CertificateService {
+public class CertificateService implements org.nikahgator.mail.DocumentSource {
 
     private final CertificateRepository certs;
     private final NikahRequestRepository nikahs;
@@ -100,6 +100,23 @@ public class CertificateService {
         CertificateContent content = content(m, n, issuer, c.getCertNumber(), false, false);
         byte[] bytes = CertificatePdf.render(c, content, logoBytes(masjidId), verifyUrl(c.getCertNumber()), arabicFont());
         return new Pdf(c.getCertNumber() + ".pdf", bytes);
+    }
+
+    @Override
+    public java.util.Set<String> documentTypes() {
+        return java.util.Set.of("nikah-certificate");
+    }
+
+    /** E-mailing needs a valid issued certificate for a COMPLETED nikah; the preview is never emailable. */
+    @Override
+    public Doc load(AppUser imam, String type, Long nikahId) {
+        Long masjidId = masjidOf(imam);
+        NikahRequest n = findNikah(masjidId, nikahId);
+        requireCompleted(n);
+        Certificate c = certs.findByRequestIdAndMasjidIdAndStatus(nikahId, masjidId, Certificate.VALID)
+                .orElseThrow(() -> new ApiException(HttpStatus.CONFLICT, "There is no valid certificate to e-mail. Issue the certificate first."));
+        Pdf pdf = pdf(imam, nikahId);
+        return new Doc(masjidId, "Nikah certificate", c.getCertNumber(), pdf.filename(), pdf.bytes(), false);
     }
 
     /** What the on-screen preview shows. Allowed in any status; watermarked until the nikah is COMPLETED. */

@@ -170,7 +170,7 @@ public class StaffService {
             log.warn("LOG_OTP is on: temporary password for {} is {}", staff.getEmail(), password);
         }
         String site = siteUrl == null || siteUrl.isBlank() ? "" : "\nSign in at: " + siteUrl;
-        return email.send(staff.getEmail(), "Your Masjidly account for " + masjid.getName(),
+        return email.send(EmailService.Meta.of(EmailService.WELCOME, masjid.getId()), staff.getEmail(), "Your Masjidly account for " + masjid.getName(),
                 "Assalamu alaikum " + staff.getFullName() + ",\n\n"
                         + (welcome ? imam.getFullName() + " added you to " + masjid.getName() + " on Masjidly."
                                    : "A new temporary password was issued for your Masjidly account.")

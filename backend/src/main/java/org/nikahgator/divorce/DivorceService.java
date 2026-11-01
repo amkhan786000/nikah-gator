@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Linking a nikah never changes that nikah.
  */
 @Service
-public class DivorceService {
+public class DivorceService implements org.nikahgator.mail.DocumentSource {
     private final DivorceRepository repo;
     private final NikahRequestRepository nikahs;
     private final MasjidRepository masjids;
@@ -109,6 +109,23 @@ public class DivorceService {
         Divorce d = find(imam, id);
         byte[] bytes = DivorcePdf.render(d, letterhead.forMasjid(d.getMasjidId()), today(d.getMasjidId()));
         return new Pdf(d.getRecordNumber() + ".pdf", bytes);
+    }
+
+    @Override
+    public java.util.Set<String> documentTypes() {
+        return java.util.Set.of("divorce");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Doc load(AppUser imam, String type, Long id) {
+        Divorce d = find(imam, id);
+        if (d.isVoided()) {
+            throw new ApiException(HttpStatus.CONFLICT, "This record is void and cannot be e-mailed.");
+        }
+        Pdf pdf = pdf(imam, id);
+        // divorce records are private: the screen asks the imam to confirm before sending
+        return new Doc(d.getMasjidId(), "Divorce record", d.getRecordNumber(), pdf.filename(), pdf.bytes(), true);
     }
 
     // ---- helpers ----

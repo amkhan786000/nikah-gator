@@ -63,7 +63,7 @@ public class BootstrapService implements ApplicationRunner {
 
         log.warn("Bootstrap: created the first platform admin. Sign in with e-mail {} and temporary password {} "
                 + "(you will be asked to choose a new one).", address, password);
-        email.send(address, "Your Masjidly administrator account",
+        email.send(EmailService.Meta.of(EmailService.WELCOME), address, "Your Masjidly administrator account",
                 "Assalamu alaikum " + admin.getFullName() + ",\n\nAn administrator account was created for you"
                         + (siteUrl.isBlank() ? "" : " at " + siteUrl) + ".\n\nE-mail: " + address + "\nTemporary password: "
                         + password + "\n\nYou will get a code by e-mail when you sign in and must choose a new password.", password);

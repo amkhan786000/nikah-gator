@@ -6,10 +6,11 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { errorMessage } from '../../../core/auth.service';
 import { downloadPdf, printPdf } from '../pdf-file';
 import { DIVORCE_API, Divorce, talaqLabel, typeLabel } from './divorce.model';
+import { SendEmail } from '../../../shared/send-email';
 
 @Component({
   selector: 'app-divorce-view',
-  imports: [FormsModule, RouterLink, DatePipe],
+  imports: [FormsModule, RouterLink, DatePipe, SendEmail],
   template: `
     <div class="page-title-box d-flex flex-wrap align-items-center justify-content-between">
       <h4 class="page-title">Divorce record</h4>
@@ -45,6 +46,7 @@ import { DIVORCE_API, Divorce, talaqLabel, typeLabel } from './divorce.model';
           <button class="btn btn-primary btn-responsive" (click)="download()" [disabled]="busy()"><i class="mdi mdi-file-pdf"></i> Download PDF</button>
           <button class="btn btn-secondary btn-responsive" (click)="print()" [disabled]="busy()"><i class="mdi mdi-printer"></i> Print</button>
           @if (!d.voided) {
+            <app-send-email [url]="url + '/email'" [sensitive]="true" noun="this divorce record" />
             <a class="btn btn-secondary btn-responsive" [routerLink]="['/imam/svc/divorce', d.id, 'edit']"><i class="mdi mdi-pencil"></i> Edit</a>
             <button class="btn btn-outline-danger btn-responsive" (click)="voiding.set(true)">Void</button>
           }
@@ -69,7 +71,7 @@ import { DIVORCE_API, Divorce, talaqLabel, typeLabel } from './divorce.model';
 export class DivorceView {
   private http = inject(HttpClient);
   private id = inject(ActivatedRoute).snapshot.paramMap.get('id');
-  private url = `${DIVORCE_API}/${this.id}`;
+  url = `${DIVORCE_API}/${this.id}`;
 
   typeLabel = typeLabel;
   talaqLabel = talaqLabel;
