@@ -16,7 +16,7 @@ interface Day {
   asr: string | null;
   maghrib: string | null;
   isha: string | null;
-  jumuah: string | null;
+  jumuah: { time: string; label: string }[];
   notes: string | null;
 }
 
@@ -82,7 +82,9 @@ interface Times {
               @for (p of rows(t, d); track p.name) {
                 <div class="row" [class.dim]="p.dim" [class.next]="d.today && !p.dim && p.name === nextName()"><span>{{ p.name }}</span><b>{{ f(p.time) }}</b></div>
               }
-              @if (d.jumuah) { <div class="row"><span>Jumu'ah</span><b>{{ f(d.jumuah) }}</b></div> }
+              @for (j of d.jumuah; track $index) {
+                <div class="row"><span>Jumu'ah{{ j.label ? ' · ' + j.label : (d.jumuah.length > 1 ? ' ' + ($index + 1) : '') }}</span><b>{{ f(j.time) }}</b></div>
+              }
               @if (d.notes) { <div class="note">{{ d.notes }}</div> }
             } @else {
               <div class="none">Times for this day have not been published yet.</div>

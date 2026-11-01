@@ -39,14 +39,16 @@ public class SalahService {
     private final MasjidRepository masjids;
     private final AppUserRepository users;
     private final ServiceEntitlements entitlements;
+    private final Geocoder geocoder;
 
     public SalahService(SalahPeriodRepository periods, SalahSettingsRepository settingsRepo, MasjidRepository masjids,
-                        AppUserRepository users, ServiceEntitlements entitlements) {
+                        AppUserRepository users, ServiceEntitlements entitlements, Geocoder geocoder) {
         this.periods = periods;
         this.settingsRepo = settingsRepo;
         this.masjids = masjids;
         this.users = users;
         this.entitlements = entitlements;
+        this.geocoder = geocoder;
     }
 
     // ---------------- imam ----------------
@@ -64,8 +66,10 @@ public class SalahService {
         LocalDate nextEnd = SalahRanges.suggestedEnd(nextStart, s.getChangeUnit(), s.getChangeEvery());
         boolean todayCovered = all.stream().anyMatch(p -> !p.getStartDate().isAfter(today) && !p.getEndDate().isBefore(today));
         Long daysLeft = covered == null ? null : java.time.temporal.ChronoUnit.DAYS.between(today, covered);
+        SunPreview sun = sunOn(today, s, masjid).map(x -> new SunPreview(hhmm(x.sunrise()), hhmm(x.sunset()),
+                hhmm(x.sunset().plusMinutes(s.getMaghribOffsetMin())))).orElse(null);
         return new Overview(settingsDto(s), all.stream().map(p -> dto(p, today)).toList(), masjid.getSlug(), masjid.getTimezone(),
-                today, covered, daysLeft, todayCovered, nextStart, nextEnd, last == null ? null : dto(last, today));
+                today, covered, daysLeft, todayCovered, nextStart, nextEnd, last == null ? null : dto(last, today), sun);
     }
 
     @Transactional
@@ -79,7 +83,19 @@ public class SalahService {
         if (req.publicDays() < 1 || req.publicDays() > 31) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "The link can show between 1 and 31 days.");
         }
+        if (req.maghribOffsetMinutes() < 0 || req.maghribOffsetMinutes() > 60) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Maghrib can be 0 to 60 minutes after sunset.");
+        }
+        if ((req.latitude() == null) != (req.longitude() == null)) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Enter both the latitude and the longitude, or neither.");
+        }
+        if (req.latitude() != null && (req.latitude() < -90 || req.latitude() > 90 || req.longitude() < -180 || req.longitude() > 180)) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "That location is not valid. Latitude is -90 to 90 and longitude -180 to 180.");
+        }
         SalahSettings s = settings(user.getMasjidId());
+        s.setLatitude(req.latitude());
+        s.setLongitude(req.longitude());
+        s.setMaghribOffsetMin(req.maghribOffsetMinutes());
         s.setChangeUnit(req.changeUnit());
         s.setChangeEvery(req.changeEvery());
         s.setPublicEnabled(req.publicEnabled());
@@ -92,7 +108,7 @@ public class SalahService {
     public PeriodDto create(AppUser user, PeriodRequest req) {
         SalahPeriod p = new SalahPeriod();
         p.setMasjidId(user.getMasjidId());
-        apply(p, req);
+        apply(p, req, settings(user.getMasjidId()));
         carve(user.getMasjidId(), p.getStartDate(), p.getEndDate(), null);
         return dto(periods.save(p), today(masjid(user.getMasjidId())));
     }
@@ -101,7 +117,7 @@ public class SalahService {
     public PeriodDto update(AppUser user, Long id, PeriodRequest req) {
         SalahPeriod p = periods.findByIdAndMasjidId(id, user.getMasjidId())
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Period not found"));
-        apply(p, req);
+        apply(p, req, settings(user.getMasjidId()));
         carve(user.getMasjidId(), p.getStartDate(), p.getEndDate(), p.getId());
         return dto(periods.save(p), today(masjid(user.getMasjidId())));
     }
@@ -130,11 +146,16 @@ public class SalahService {
         }
         SalahCsv.Result parsed = SalahCsv.parse(text);
         List<ImportRow> rows = parsed.rows().stream().map(r -> new ImportRow(r.line(), r.start(), r.end(), hhmm(r.fajr()),
-                hhmm(r.sunrise()), hhmm(r.dhuhr()), hhmm(r.asr()), hhmm(r.maghrib()), hhmm(r.isha()), hhmm(r.jumuah()), r.notes())).toList();
+                hhmm(r.sunrise()), hhmm(r.dhuhr()), hhmm(r.asr()), hhmm(r.maghrib()), hhmm(r.isha()), sessions(r.jumuah()), r.notes())).toList();
         if (!parsed.errors().isEmpty()) {
             return new ImportResult(false, rows.size(), 0, rows, parsed.errors());
         }
         Long mid = user.getMasjidId();
+        SalahSettings settings = settings(mid);
+        if (settings.getLatitude() == null && parsed.rows().stream().anyMatch(r -> r.maghrib() == null)) {
+            return new ImportResult(false, rows.size(), 0, rows, List.of("Some rows have no Maghrib time, which is calculated from your masjid's location. "
+                    + "Set the location in \"How your times are published\" first, or add a maghrib column."));
+        }
         int replaced = 0;
         for (SalahCsv.Row r : parsed.rows()) {
             replaced += periods.findByMasjidIdAndEndDateGreaterThanEqualAndStartDateLessThanEqualOrderByStartDate(mid, r.start(), r.end()).size();
@@ -154,7 +175,7 @@ public class SalahService {
             p.setAsr(r.asr());
             p.setMaghrib(r.maghrib());
             p.setIsha(r.isha());
-            p.setJumuah(r.jumuah());
+            p.setJumuahSessions(writeSessions(sessions(r.jumuah())));
             p.setNotes(r.notes());
             periods.save(p);
         }
@@ -162,9 +183,11 @@ public class SalahService {
     }
 
     public static String templateCsv() {
-        return "start date,end date,fajr,sunrise,dhuhr,asr,maghrib,isha,jumuah,notes\n"
-                + "2026-11-01,2026-11-10,5:41 AM,6:58 AM,12:05 PM,2:45 PM,5:10 PM,6:30 PM,1:15 PM,\n"
-                + "2026-11-11,2026-11-20,5:48 AM,7:04 AM,12:07 PM,2:42 PM,5:05 PM,6:26 PM,1:15 PM,\n"
+        return "start date,end date,fajr,dhuhr,asr,isha,jumuah,notes\n"
+                + "2026-11-01,2026-11-10,5:41 AM,12:05 PM,2:45 PM,6:30 PM,1:15 PM | 2:15 PM,\n"
+                + "2026-11-11,2026-11-20,5:48 AM,12:07 PM,2:42 PM,6:26 PM,1:15 PM | 2:15 PM,\n"
+                + "# Sunrise and Maghrib are worked out from your masjid's location. Add \"sunrise\" or \"maghrib\" columns only to override them.\n"
+                + "# Several Jumu'ah times: put them in one cell separated by | , or use columns jumuah 1, jumuah 2.\n"
                 + "# One row per range of days. For daily times use a single \"date\" column instead of start/end.\n";
     }
 
@@ -193,12 +216,18 @@ public class SalahService {
             final LocalDate day = d;
             SalahPeriod p = found.stream().filter(x -> !x.getStartDate().isAfter(day) && !x.getEndDate().isBefore(day)).findFirst().orElse(null);
             String weekday = d.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.ENGLISH);
+            if (p == null) {
+                days.add(new PublicDay(d, weekday, d.equals(today), false, null, null, null, null, null, null, List.of(), null));
+                continue;
+            }
+            var sun = sunOn(d, s, masjid);
+            LocalTime sunrise = p.getSunrise() != null ? p.getSunrise() : sun.map(SolarTimes.Sun::sunrise).orElse(null);
+            LocalTime maghrib = p.getMaghrib() != null ? p.getMaghrib()
+                    : sun.map(x -> x.sunset().plusMinutes(s.getMaghribOffsetMin())).orElse(null);
             boolean friday = d.getDayOfWeek() == DayOfWeek.FRIDAY;
-            days.add(p == null
-                    ? new PublicDay(d, weekday, d.equals(today), false, null, null, null, null, null, null, null, null)
-                    : new PublicDay(d, weekday, d.equals(today), true, hhmm(p.getFajr()), s.isShowSunrise() ? hhmm(p.getSunrise()) : null,
-                            hhmm(p.getDhuhr()), hhmm(p.getAsr()), hhmm(p.getMaghrib()), hhmm(p.getIsha()),
-                            friday ? hhmm(p.getJumuah()) : null, p.getNotes()));
+            days.add(new PublicDay(d, weekday, d.equals(today), true, hhmm(p.getFajr()), s.isShowSunrise() ? hhmm(sunrise) : null,
+                    hhmm(p.getDhuhr()), hhmm(p.getAsr()), hhmm(maghrib), hhmm(p.getIsha()),
+                    friday ? readSessions(p.getJumuahSessions()) : List.of(), p.getNotes()));
         }
         String address = java.util.stream.Stream.of(masjid.getAddressLine(), masjid.getCity(), masjid.getState(), masjid.getZip())
                 .filter(x -> x != null && !x.isBlank()).collect(java.util.stream.Collectors.joining(", "));
@@ -236,7 +265,7 @@ public class SalahService {
                 tail.setAsr(old.getAsr());
                 tail.setMaghrib(old.getMaghrib());
                 tail.setIsha(old.getIsha());
-                tail.setJumuah(old.getJumuah());
+                tail.setJumuahSessions(old.getJumuahSessions());
                 tail.setNotes(old.getNotes());
                 periods.save(tail);
             }
@@ -244,7 +273,7 @@ public class SalahService {
         periods.flush();
     }
 
-    private void apply(SalahPeriod p, PeriodRequest req) {
+    private void apply(SalahPeriod p, PeriodRequest req, SalahSettings settings) {
         if (req.endDate().isBefore(req.startDate())) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "The end date is before the start date.");
         }
@@ -253,12 +282,26 @@ public class SalahService {
         }
         LocalTime fajr = time("Fajr", req.fajr(), true), sunrise = time("Sunrise", req.sunrise(), false),
                 dhuhr = time("Dhuhr", req.dhuhr(), true), asr = time("Asr", req.asr(), true),
-                maghrib = time("Maghrib", req.maghrib(), true), isha = time("Isha", req.isha(), true),
-                jumuah = time("Jumuah", req.jumuah(), false);
+                maghrib = time("Maghrib", req.maghrib(), false), isha = time("Isha", req.isha(), true);
+        if (maghrib == null && settings.getLatitude() == null) {
+            throw new ApiException(HttpStatus.BAD_REQUEST,
+                    "Maghrib is worked out from your masjid's location. Set the location in \"How your times are published\", or enter Maghrib.");
+        }
         String order = SalahCsv.orderProblem(fajr, sunrise, dhuhr, asr, maghrib, isha);
         if (order != null) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "The times are not in order (Fajr, Sunrise, Dhuhr, Asr, Maghrib, Isha).");
         }
+        List<Session> jumuah = new ArrayList<>();
+        for (Session x : req.jumuah() == null ? List.<Session>of() : req.jumuah()) {
+            if (x.time() == null || x.time().isBlank()) {
+                continue;
+            }
+            jumuah.add(new Session(hhmm(time("Jumu'ah", x.time(), true)), x.label() == null ? "" : x.label().trim()));
+        }
+        if (jumuah.size() > 5) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "At most 5 Jumu'ah times.");
+        }
+        jumuah.sort((a, b) -> a.time().compareTo(b.time()));
         p.setStartDate(req.startDate());
         p.setEndDate(req.endDate());
         p.setFajr(fajr);
@@ -267,7 +310,7 @@ public class SalahService {
         p.setAsr(asr);
         p.setMaghrib(maghrib);
         p.setIsha(isha);
-        p.setJumuah(jumuah);
+        p.setJumuahSessions(writeSessions(jumuah));
         p.setNotes(req.notes() == null || req.notes().isBlank() ? null : req.notes().trim());
     }
 
@@ -314,12 +357,62 @@ public class SalahService {
     }
 
     private static SettingsDto settingsDto(SalahSettings s) {
-        return new SettingsDto(s.getChangeUnit(), s.getChangeEvery(), s.isPublicEnabled(), s.getPublicDays(), s.isShowSunrise());
+        return new SettingsDto(s.getChangeUnit(), s.getChangeEvery(), s.isPublicEnabled(), s.getPublicDays(), s.isShowSunrise(),
+                s.getLatitude(), s.getLongitude(), s.getMaghribOffsetMin());
     }
 
-    private static PeriodDto dto(SalahPeriod p, LocalDate today) {
+    private PeriodDto dto(SalahPeriod p, LocalDate today) {
         return new PeriodDto(p.getId(), p.getStartDate(), p.getEndDate(), hhmm(p.getFajr()), hhmm(p.getSunrise()), hhmm(p.getDhuhr()),
-                hhmm(p.getAsr()), hhmm(p.getMaghrib()), hhmm(p.getIsha()), hhmm(p.getJumuah()), p.getNotes(),
+                hhmm(p.getAsr()), hhmm(p.getMaghrib()), hhmm(p.getIsha()), readSessions(p.getJumuahSessions()), p.getNotes(),
                 !p.getStartDate().isAfter(today) && !p.getEndDate().isBefore(today));
+    }
+
+    /** Looks up the masjid's own address; the imam confirms (and can correct) the result before saving it. */
+    public Location locate(AppUser user) {
+        Masjid m = masjid(user.getMasjidId());
+        String q = java.util.stream.Stream.of(m.getAddressLine(), m.getCity(), m.getState(), m.getZip())
+                .filter(x -> x != null && !x.isBlank()).collect(java.util.stream.Collectors.joining(", "));
+        var found = geocoder.find(q);
+        if (found.isEmpty() && m.getZip() != null && !m.getZip().isBlank()) {
+            found = geocoder.find(m.getZip() + ", USA");
+        }
+        return found.map(f -> new Location(f.latitude(), f.longitude(), f.place()))
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND,
+                        "Could not find that address. Enter the latitude and longitude, or use your current location."));
+    }
+
+    private java.util.Optional<SolarTimes.Sun> sunOn(LocalDate date, SalahSettings s, Masjid masjid) {
+        if (s.getLatitude() == null || s.getLongitude() == null) {
+            return java.util.Optional.empty();
+        }
+        return SolarTimes.of(date, s.getLatitude(), s.getLongitude(), zone(masjid));
+    }
+
+    private List<Session> sessions(List<SalahCsv.Jumuah> list) {
+        return list == null ? List.of() : list.stream().map(j -> new Session(hhmm(j.time()), j.label())).toList();
+    }
+
+    /** Stored as "13:15|English;14:15|" (time, then an optional label; ; and | are not allowed in labels). */
+    private String writeSessions(List<Session> list) {
+        if (list == null || list.isEmpty()) {
+            return null;
+        }
+        return list.stream().map(x -> x.time() + "|" + (x.label() == null ? "" : x.label().replaceAll("[;|]", " ").trim()))
+                .collect(java.util.stream.Collectors.joining(";"));
+    }
+
+    private List<Session> readSessions(String text) {
+        List<Session> out = new ArrayList<>();
+        if (text == null || text.isBlank()) {
+            return out;
+        }
+        for (String part : text.split(";")) {
+            String[] bits = part.split("\\|", 2);
+            if (bits[0].isBlank()) {
+                continue;
+            }
+            out.add(new Session(bits[0].trim(), bits.length > 1 ? bits[1].trim() : ""));
+        }
+        return out;
     }
 }

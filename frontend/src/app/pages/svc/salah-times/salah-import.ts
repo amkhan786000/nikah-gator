@@ -22,7 +22,8 @@ const API = '/api/imam/svc/salah-times';
       <p>Upload a file with one row per day, or one row per range of days. Columns can be in any order:</p>
       <ul class="small text-muted">
         <li><strong>date</strong> (one day per row), or <strong>start date</strong> and <strong>end date</strong> (a range per row)</li>
-        <li><strong>fajr, sunrise, dhuhr, asr, maghrib, isha</strong>, and optionally <strong>jumuah</strong> and <strong>notes</strong></li>
+        <li><strong>fajr, dhuhr, asr, isha</strong> and optionally <strong>jumuah</strong> and <strong>notes</strong>. <strong>Sunrise</strong> and <strong>maghrib</strong> are worked out from your masjid's location, so leave those columns out (add them only to override a day).</li>
+        <li>More than one Jumu'ah: put them in one cell separated by | (for example <em>1:15 PM | 2:15 PM</em>), or use columns <strong>jumuah 1</strong>, <strong>jumuah 2</strong>.</li>
         <li>Dates like 2026-11-05 or 11/5/2026. Times like 5:23 AM or 17:45 (without AM/PM, afternoon times are understood).</li>
       </ul>
       <button class="btn btn-sm btn-outline-primary mb-3" type="button" (click)="template()"><i class="mdi mdi-download"></i> Download an example file</button>
@@ -49,7 +50,7 @@ const API = '/api/imam/svc/salah-times';
             <tbody>
               @for (x of res.rows.slice(0, 40); track x.line) {
                 <tr><td class="text-nowrap">{{ x.startDate | date: 'MMM d' }}{{ x.endDate === x.startDate ? '' : ' – ' + (x.endDate | date: 'MMM d') }}</td>
-                  <td>{{ f(x.fajr) }}</td><td>{{ f(x.sunrise) }}</td><td>{{ f(x.dhuhr) }}</td><td>{{ f(x.asr) }}</td><td>{{ f(x.maghrib) }}</td><td>{{ f(x.isha) }}</td><td>{{ f(x.jumuah) }}</td></tr>
+                  <td>{{ f(x.fajr) }}</td><td>{{ x.sunrise ? f(x.sunrise) : 'Auto' }}</td><td>{{ f(x.dhuhr) }}</td><td>{{ f(x.asr) }}</td><td>{{ x.maghrib ? f(x.maghrib) : 'Auto' }}</td><td>{{ f(x.isha) }}</td><td>@for (j of x.jumuah; track $index) { <div class="text-nowrap">{{ f(j.time) }}</div> }</td></tr>
               }
             </tbody>
           </table>
