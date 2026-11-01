@@ -2,6 +2,7 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { map, of, catchError } from 'rxjs';
 import { AuthService, Role } from './auth.service';
+import { CatalogService } from './catalog.service';
 
 /** Signed in (loads the profile once) and, if needed, forced through the password change first. */
 export const authGuard: CanActivateFn = (_route, state) => {
@@ -30,3 +31,14 @@ export const guestGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   return auth.signedIn() ? inject(Router).parseUrl(auth.homeFor(auth.me()?.role)) : true;
 };
+
+/** The imam may open this page only while the admin has the service switched on. */
+export const serviceGuard =
+  (key: string): CanActivateFn =>
+  () => {
+    const router = inject(Router);
+    return inject(CatalogService).has(key).pipe(
+      map((on) => on || router.parseUrl('/imam/not-available')),
+      catchError(() => of(true)),
+    );
+  };

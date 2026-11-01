@@ -2,6 +2,7 @@ import { Component, HostListener, inject, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 import { AuthService } from '../core/auth.service';
+import { CatalogService } from '../core/catalog.service';
 
 interface NavLink { path: string; label: string; icon: string }
 
@@ -59,6 +60,7 @@ interface NavLink { path: string; label: string; icon: string }
 })
 export class Shell {
   protected auth = inject(AuthService);
+  private catalog = inject(CatalogService);
   private router = inject(Router);
 
   collapsed = signal(false);
@@ -73,6 +75,7 @@ export class Shell {
       this.label.set(this.labelFor(this.router.url));
     });
     this.label.set(this.labelFor(this.router.url));
+    if (this.auth.me()?.role === 'IMAM') this.catalog.load(true).subscribe({ error: () => this.catalog.services.set([]) });
   }
 
   @HostListener('document:click')
@@ -81,13 +84,24 @@ export class Shell {
   }
 
   links(): NavLink[] {
-    return this.auth.me()?.role === 'PLATFORM_ADMIN'
-      ? [{ path: '/admin/masjids', label: 'Masjids', icon: 'mdi-home-city-outline' }]
-      : [
+    if (this.auth.me()?.role === 'PLATFORM_ADMIN') {
+      return [{ path: '/admin/masjids', label: 'Masjids', icon: 'mdi-home-city-outline' }];
+    }
+    // Only what the platform admin has switched on for this imam (null while loading).
+    const on = this.catalog.services() ?? [];
+    const links: NavLink[] = [];
+    for (const s of on) {
+      if (s.key === 'NIKAH') {
+        links.push(
           { path: '/imam/nikahs', label: 'Nikahs', icon: 'mdi-book-open-page-variant' },
           { path: '/imam/settings', label: 'Masjid settings', icon: 'mdi-settings' },
           { path: '/imam/certificate-design', label: 'Certificate design', icon: 'mdi-certificate-outline' },
-        ];
+        );
+      } else {
+        links.push({ path: '/imam/svc/' + s.slug, label: s.label, icon: s.icon });
+      }
+    }
+    return links;
   }
 
   roleLabel(): string {
@@ -105,7 +119,9 @@ export class Shell {
 
   private labelFor(url: string): string {
     const u = url.split(/[?#]/)[0];
+    if (u.startsWith('/admin/masjids/') && u.endsWith('/services')) return 'Services';
     if (u.startsWith('/admin/masjids')) return 'Masjids';
+    if (u.startsWith('/imam/not-available')) return 'Not available';
     if (u.startsWith('/imam/settings')) return 'Masjid settings';
     if (u.endsWith('/new')) return 'Register nikah';
     if (u.endsWith('/edit')) return 'Edit nikah';

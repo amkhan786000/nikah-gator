@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
+import { CatalogService } from './catalog.service';
 
 export type Role = 'PLATFORM_ADMIN' | 'IMAM' | 'COUPLE';
 
@@ -46,6 +47,7 @@ export function errorMessage(e: any): string {
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
+  private catalog = inject(CatalogService);
 
   readonly token = signal<string | null>(readToken());
   readonly me = signal<Me | null>(null);
@@ -80,6 +82,7 @@ export class AuthService {
   logout(): void {
     this.setToken(null);
     this.me.set(null);
+    this.catalog.clear();
     this.router.navigateByUrl('/login');
   }
 
