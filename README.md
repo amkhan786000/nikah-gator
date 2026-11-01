@@ -13,12 +13,13 @@ Monorepo, same layout and Contabo deployment as the `ba` project.
 
 ## Product model
 
-- **Multi-masjid.** A masjid registers itself together with its imam. There is no board or committee approval.
-- **The imam manages the masjid.** Roles: `PLATFORM_ADMIN` (us), `IMAM` (manages their own masjid: approves requests, schedules, issues certificates, sets the fee), `COUPLE`.
-- **First version scope:** nikah requests and scheduling; documents and checklist (license, IDs, wali/witnesses, mahr, counseling); certificate PDF and records; payments (fee/donation) and email/SMS reminders.
-- Mobile app later, against the same REST API.
+- **SaaS, multi-masjid.** The platform admin signs in first (created from `ADMIN_EMAIL` on an empty database) and creates each masjid together with its imam. There is no self-registration and no board approval.
+- The imam gets an email with a temporary password, signs in with an emailed code (optionally "remember this device"), chooses a new password, and manages **their own masjid only**: registers nikahs, prints the certificate.
+- Roles: `PLATFORM_ADMIN`, `IMAM`.
+- UI: the same Bootstrap/Adminto theme and layout as Rahbar (`ba`), mobile friendly (tables become cards on phones).
+- Planned next: documents and checklist, certificate PDF and numbering, payments, reminders.
 
-Schema: `backend/src/main/resources/db/migration/V1__core_schema.sql`.
+Schema: `backend/src/main/resources/db/migration/`.
 
 ## Run locally
 
@@ -41,4 +42,4 @@ See `deploy/`. Images are built by GitHub Actions and pulled on the server into 
 
 ## Status
 
-Scaffold only: schema, security skeleton, health endpoint, Docker/CI/deploy. Registration, auth (JWT), requests and the Angular screens are next.
+Working: login with emailed code + remember device, forgot/reset/change password, admin creates masjid + imam, imam registers/edits nikahs and prints a certificate, Angular screens for all of it.

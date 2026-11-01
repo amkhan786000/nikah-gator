@@ -5,6 +5,10 @@ import java.util.Map;
 import org.nikahgator.dto.AuthDtos.*;
 import org.nikahgator.entity.AppUser;
 import org.nikahgator.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.nikahgator.repository.MasjidRepository;
+import org.nikahgator.service.TrustedDeviceService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,19 +17,29 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService auth;
+    private final TrustedDeviceService devices;
+    private final MasjidRepository masjids;
 
-    public AuthController(AuthService auth) {
+    public AuthController(AuthService auth, TrustedDeviceService devices, MasjidRepository masjids) {
         this.auth = auth;
+        this.devices = devices;
+        this.masjids = masjids;
     }
 
     @PostMapping("/login")
-    public AuthResponse login(@RequestBody LoginRequest req) {
-        return auth.login(req);
+    public AuthResponse login(@RequestBody LoginRequest req, HttpServletRequest request) {
+        return auth.login(req, DeviceCookie.clientIp(request), DeviceCookie.read(request));
     }
 
     @PostMapping("/verify-otp")
-    public AuthResponse verifyOtp(@RequestBody OtpVerifyRequest req) {
-        return auth.verifyOtp(req);
+    public AuthResponse verifyOtp(@RequestBody OtpVerifyRequest req, HttpServletRequest request, HttpServletResponse response) {
+        AuthResponse res = auth.verifyOtp(req);
+        // "Remember this device": this browser skips the code next time, until the cookie expires.
+        if (req.rememberDevice()) {
+            devices.remember(res.id(), request.getHeader("User-Agent"), DeviceCookie.clientIp(request))
+                    .ifPresent(d -> DeviceCookie.write(request, response, d.token(), d.days()));
+        }
+        return res;
     }
 
     /** The answer is the same whether or not the e-mail has an account. */
@@ -49,7 +63,19 @@ public class AuthController {
 
     @GetMapping("/me")
     public Map<String, Object> me(@AuthenticationPrincipal AppUser user) {
-        return Map.of("id", user.getId(), "email", user.getEmail(), "name", user.getFullName(), "role", user.getRole(),
-                "mustChangePassword", user.isMustChangePassword());
+        Map<String, Object> out = new java.util.LinkedHashMap<>();
+        out.put("id", user.getId());
+        out.put("email", user.getEmail());
+        out.put("name", user.getFullName());
+        out.put("role", user.getRole());
+        out.put("mustChangePassword", user.isMustChangePassword());
+        if (user.getMasjidId() != null) {
+            masjids.findById(user.getMasjidId()).ifPresent(m -> {
+                out.put("masjidName", m.getName());
+                out.put("masjidAddress", java.util.stream.Stream.of(m.getAddressLine(), m.getCity(), m.getState(), m.getZip())
+                        .filter(x -> x != null && !x.isBlank()).collect(java.util.stream.Collectors.joining(", ")));
+            });
+        }
+        return out;
     }
 }

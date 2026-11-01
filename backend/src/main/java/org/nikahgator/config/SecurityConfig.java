@@ -34,8 +34,10 @@ public class SecurityConfig {
             .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
             .addFilterBefore(new JwtAuthFilter(jwt, users), UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(a -> a
-                .requestMatchers("/api/public/**", "/actuator/health/**", "/api/auth/login", "/api/auth/verify-otp",
+                .requestMatchers("/api/public/**", "/actuator/health/**", "/error", "/api/auth/login", "/api/auth/verify-otp",
                         "/api/auth/forgot-password", "/api/auth/reset-password").permitAll()
+                .requestMatchers("/api/admin/**").hasRole("PLATFORM_ADMIN")
+                .requestMatchers("/api/imam/**").hasRole("IMAM")
                 .anyRequest().authenticated());
         return http.build();
     }
