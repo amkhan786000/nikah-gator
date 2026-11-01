@@ -28,6 +28,10 @@ public class MasjidAdminService {
     private final PasswordEncoder encoder;
     private final EmailService email;
 
+    /** feature:reminders - told when a masjid is created (blank = nobody). */
+    @Value("${app.bootstrap.admin-email:}")
+    private String adminEmail;
+
     @Value("${app.site-url:}")
     private String siteUrl;
 
@@ -71,6 +75,10 @@ public class MasjidAdminService {
 
         // saves the imam together with a random temporary password
         boolean sent = issueTemporaryPassword(imam, masjid, true);
+        if (adminEmail != null && !adminEmail.isBlank()) { // feature:reminders
+            ReminderMessages.Message note = ReminderMessages.adminMasjidCreated(masjid.getName(), imam.getFullName(), imam.getEmail());
+            email.send(adminEmail.trim(), note.subject(), note.body());
+        }
         return view(masjid, imam, sent);
     }
 

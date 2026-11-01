@@ -5,10 +5,13 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService, errorMessage } from '../core/auth.service';
 import { Nikah } from './nikah.model';
 import { NikahCertificate } from './nikah-certificate';
+import { NikahDocuments } from './nikah-documents';
+import { NikahNotifications } from './nikah-notifications';
+import { NikahPayments } from './nikah-payments';
 
 @Component({
   selector: 'app-nikah-view',
-  imports: [RouterLink, DatePipe, NikahCertificate],
+  imports: [RouterLink, DatePipe, NikahCertificate, NikahDocuments, NikahNotifications, NikahPayments],
   template: `
     @if (error()) { <div class="alert alert-danger">{{ error() }}</div> }
     @if (n(); as n) {
@@ -31,10 +34,18 @@ import { NikahCertificate } from './nikah-certificate';
           <div><span>Notes</span><strong>{{ n.notes || '—' }}</strong></div>
         </div>
       </div></div>
-
       <!-- feature:certificates -->
       <app-nikah-certificate [nikahId]="n.id!" [status]="n.status ?? ''" />
       <!-- /feature:certificates -->
+      <!-- feature:documents -->
+      <app-nikah-documents [nikahId]="n.id!" />
+      <!-- /feature:documents -->
+      <!-- feature:payments -->
+      <app-nikah-payments [nikahId]="n.id!" />
+      <!-- /feature:payments -->
+      <!-- feature:notifications -->
+      <app-nikah-notifications [nikahId]="n.id!" [refresh]="n.status + n.nikahAt" />
+      <!-- /feature:notifications -->
     }
   `,
 })
