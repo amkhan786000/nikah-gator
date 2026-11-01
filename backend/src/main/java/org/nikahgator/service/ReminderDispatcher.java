@@ -78,7 +78,8 @@ public class ReminderDispatcher {
         boolean ok = false;
         String error = null;
         try {
-            ok = email.send(n.getRecipient(), n.getSubject(), n.getBody());
+            ok = email.send(new EmailService.Meta(EmailService.REMINDER, n.getMasjidId(), "NIKAH", n.getRequestId()),
+                    n.getRecipient(), n.getSubject(), n.getBody());
             if (!ok) {
                 error = "The e-mail could not be sent.";
             }

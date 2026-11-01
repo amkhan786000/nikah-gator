@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /** Community service certificates of the imam's own masjid. Another masjid's record looks the same as a missing one (404). */
 @Service
-public class ServiceCertService {
+public class ServiceCertService implements org.nikahgator.mail.DocumentSource {
     private final ServiceCertRepository certs;
     private final MasjidRepository masjids;
     private final Letterhead letterhead;
@@ -80,6 +80,22 @@ public class ServiceCertService {
         ServiceCert c = find(imam, id);
         byte[] bytes = ServiceCertPdf.render(c, letterhead.forMasjid(c.getMasjidId()), imam.getFullName());
         return new Pdf(c.getCertNumber() + ".pdf", bytes);
+    }
+
+    @Override
+    public java.util.Set<String> documentTypes() {
+        return java.util.Set.of("community-service");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Doc load(AppUser imam, String type, Long id) {
+        ServiceCert c = find(imam, id);
+        if (!ServiceCert.VALID.equals(c.getStatus())) {
+            throw new ApiException(HttpStatus.CONFLICT, "This certificate is void and cannot be e-mailed.");
+        }
+        Pdf pdf = pdf(imam, id);
+        return new Doc(c.getMasjidId(), "Community service certificate", c.getCertNumber(), pdf.filename(), pdf.bytes(), false);
     }
 
     // ---- helpers ----

@@ -101,8 +101,11 @@ export class Shell {
 
   links(): NavLink[] {
     if (this.auth.me()?.role === 'PLATFORM_ADMIN') {
-      return [{ path: '/admin/masjids', label: 'Masjids', icon: 'mdi-home-city-outline' },
-        { path: '/admin/activity', label: 'Activity log', icon: 'mdi-history' }];
+      return [
+        { path: '/admin/masjids', label: 'Masjids', icon: 'mdi-home-city-outline' },
+        { path: '/admin/activity', label: 'Activity log', icon: 'mdi-history' },
+        { path: '/admin/email-log', label: 'E-mail log', icon: 'mdi-email-search-outline' },
+      ];
     }
     // Only what the platform admin has switched on for this imam (null while loading).
     const on = this.catalog.services() ?? [];
@@ -122,8 +125,9 @@ export class Shell {
       }
     }
     if (this.auth.me()?.role === 'IMAM') {
-      links.push({ path: '/imam/staff', label: 'Team', icon: 'mdi-account-multiple-outline' },
-        { path: '/imam/activity', label: 'Activity log', icon: 'mdi-history' });
+      links.push({ path: '/imam/staff', label: 'Team', icon: 'mdi-account-multiple-outline' });
+      links.push({ path: '/imam/activity', label: 'Activity log', icon: 'mdi-history' });
+      links.push({ path: '/imam/email-log', label: 'E-mail log', icon: 'mdi-email-search-outline' });
     }
     return links;
   }

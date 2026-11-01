@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /** Juma letters of the imam's own masjid. Another masjid's letter looks the same as a missing one (404). */
 @Service
-public class JumaService {
+public class JumaService implements org.nikahgator.mail.DocumentSource {
     private final JumaLetterRepository letters;
     private final MasjidRepository masjids;
     private final Letterhead letterhead;
@@ -73,6 +73,22 @@ public class JumaService {
         JumaLetter l = find(imam, id);
         byte[] bytes = JumaPdf.render(l, letterhead.forMasjid(l.getMasjidId()), imam.getFullName());
         return new Pdf("juma-letter-" + l.getId() + ".pdf", bytes);
+    }
+
+    @Override
+    public java.util.Set<String> documentTypes() {
+        return java.util.Set.of("juma");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Doc load(AppUser imam, String type, Long id) {
+        JumaLetter l = find(imam, id);
+        if (!JumaLetter.ACTIVE.equals(l.getStatus())) {
+            throw new ApiException(HttpStatus.CONFLICT, "This letter has been voided and cannot be e-mailed.");
+        }
+        Pdf pdf = pdf(imam, id);
+        return new Doc(l.getMasjidId(), "Juma request letter", "No. " + l.getId(), pdf.filename(), pdf.bytes(), false);
     }
 
     // ---- helpers ----

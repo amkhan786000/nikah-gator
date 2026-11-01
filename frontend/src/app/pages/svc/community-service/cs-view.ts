@@ -7,10 +7,11 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { errorMessage } from '../../../core/auth.service';
 import { downloadPdf, printPdf } from '../pdf-file';
 import { CS_API, ServiceCert } from './cs.model';
+import { SendEmail } from '../../../shared/send-email';
 
 @Component({
   selector: 'app-cs-view',
-  imports: [AuditInfoView, FormsModule, RouterLink, DatePipe],
+  imports: [AuditInfoView, FormsModule, RouterLink, DatePipe, SendEmail],
   template: `
     <div class="page-title-box d-flex flex-wrap align-items-center justify-content-between">
       <h4 class="page-title">Community service certificate</h4>
@@ -38,6 +39,7 @@ import { CS_API, ServiceCert } from './cs.model';
           <button class="btn btn-primary btn-responsive" (click)="download()" [disabled]="busy()"><i class="mdi mdi-file-pdf"></i> Download PDF</button>
           <button class="btn btn-secondary btn-responsive" (click)="print()" [disabled]="busy()"><i class="mdi mdi-printer"></i> Print</button>
           @if (c.status === 'VALID') {
+            <app-send-email [url]="url + '/email'" noun="this certificate" />
             <a class="btn btn-secondary btn-responsive" [routerLink]="['/imam/svc/community-service', c.id, 'edit']"><i class="mdi mdi-pencil"></i> Edit</a>
             <button class="btn btn-outline-danger btn-responsive" (click)="voiding.set(true)">Void</button>
           }
@@ -63,7 +65,7 @@ import { CS_API, ServiceCert } from './cs.model';
 export class CsView {
   private http = inject(HttpClient);
   private id = inject(ActivatedRoute).snapshot.paramMap.get('id');
-  private url = `${CS_API}/${this.id}`;
+  url = `${CS_API}/${this.id}`;
 
   c = signal<ServiceCert | null>(null);
   busy = signal(false);

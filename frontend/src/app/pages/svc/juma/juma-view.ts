@@ -8,10 +8,11 @@ import { errorMessage } from '../../../core/auth.service';
 import { CardTableDirective } from '../../../shared/card-table.directive';
 import { downloadPdf, printPdf } from '../pdf-file';
 import { JUMA_API, JumaLetter, clock } from './juma.model';
+import { SendEmail } from '../../../shared/send-email';
 
 @Component({
   selector: 'app-juma-view',
-  imports: [AuditInfoView, FormsModule, RouterLink, DatePipe, CardTableDirective],
+  imports: [AuditInfoView, FormsModule, RouterLink, DatePipe, CardTableDirective, SendEmail],
   template: `
     <div class="page-title-box d-flex flex-wrap align-items-center justify-content-between">
       <h4 class="page-title">Juma letter</h4>
@@ -47,6 +48,7 @@ import { JUMA_API, JumaLetter, clock } from './juma.model';
           <button class="btn btn-primary btn-responsive" (click)="download()" [disabled]="busy()"><i class="mdi mdi-file-pdf"></i> Download PDF</button>
           <button class="btn btn-secondary btn-responsive" (click)="print()" [disabled]="busy()"><i class="mdi mdi-printer"></i> Print</button>
           @if (l.status === 'ACTIVE') {
+            <app-send-email [url]="url + '/email'" noun="this letter" />
             <a class="btn btn-secondary btn-responsive" [routerLink]="['/imam/svc/juma', l.id, 'edit']"><i class="mdi mdi-pencil"></i> Edit</a>
             <button class="btn btn-outline-danger btn-responsive" (click)="voiding.set(true)">Void</button>
           }
@@ -72,7 +74,7 @@ import { JUMA_API, JumaLetter, clock } from './juma.model';
 export class JumaView {
   private http = inject(HttpClient);
   private id = inject(ActivatedRoute).snapshot.paramMap.get('id');
-  private url = `${JUMA_API}/${this.id}`;
+  url = `${JUMA_API}/${this.id}`;
 
   l = signal<JumaLetter | null>(null);
   busy = signal(false);
