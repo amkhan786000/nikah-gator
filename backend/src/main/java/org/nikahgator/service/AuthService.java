@@ -93,7 +93,7 @@ public class AuthService {
         otp.setUserId(user.getId());
         otp.setCodeHash(encoder.encode(code));
         otps.save(otp);
-        email.send(user.getEmail(), "Your Masjidly sign-in code",
+        email.send(EmailService.Meta.of(EmailService.OTP, user.getMasjidId()), user.getEmail(), "Your Masjidly sign-in code",
                 "Assalamu alaikum " + user.getFullName() + ",\n\nYour sign-in code is " + code + ". It is valid for "
                         + OTP_MINUTES + " minutes.\n\nIf you did not try to sign in, please ignore this e-mail.", code);
         if (logOtp) {
@@ -181,7 +181,7 @@ public class AuthService {
         reset.setCodeHash(encoder.encode(code));
         reset.setExpiresAt(LocalDateTime.now().plusMinutes(RESET_CODE_MINUTES));
         resetCodes.save(reset);
-        email.send(user.getEmail(), "Reset your Masjidly password",
+        email.send(EmailService.Meta.of(EmailService.PASSWORD, user.getMasjidId()), user.getEmail(), "Reset your Masjidly password",
                 "Assalamu alaikum " + user.getFullName() + ",\n\nYour password reset code is " + code + ". It is valid for "
                         + RESET_CODE_MINUTES + " minutes.\n\nIf you did not ask for this, please ignore this e-mail.", code);
         if (logOtp) {
@@ -212,7 +212,7 @@ public class AuthService {
         user.setLockedUntil(null); // proving access to the mailbox also lifts a sign-in lock
         users.save(user);
         devices.forgetAll(user.getId()); // a new password: every browser must use a code again
-        email.send(user.getEmail(), "Your Masjidly password was changed",
+        email.send(EmailService.Meta.of(EmailService.PASSWORD, user.getMasjidId()), user.getEmail(), "Your Masjidly password was changed",
                 "Your password was reset using \"Forgot password\". If this wasn't you, contact the administrator straight away.");
     }
 

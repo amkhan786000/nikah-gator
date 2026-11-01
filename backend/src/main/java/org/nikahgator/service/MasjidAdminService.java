@@ -77,7 +77,7 @@ public class MasjidAdminService {
         boolean sent = issueTemporaryPassword(imam, masjid, true);
         if (adminEmail != null && !adminEmail.isBlank()) { // feature:reminders
             ReminderMessages.Message note = ReminderMessages.adminMasjidCreated(masjid.getName(), imam.getFullName(), imam.getEmail());
-            email.send(adminEmail.trim(), note.subject(), note.body());
+            email.send(EmailService.Meta.of(EmailService.OTHER), adminEmail.trim(), note.subject(), note.body());
         }
         return view(masjid, imam, sent);
     }
@@ -125,7 +125,7 @@ public class MasjidAdminService {
             log.warn("LOG_OTP is on: temporary password for {} is {}", imam.getEmail(), password);
         }
         String site = siteUrl == null || siteUrl.isBlank() ? "" : "\nSign in at: " + siteUrl;
-        return email.send(imam.getEmail(), "Your Masjidly account for " + masjid.getName(),
+        return email.send(EmailService.Meta.of(EmailService.WELCOME, masjid.getId()), imam.getEmail(), "Your Masjidly account for " + masjid.getName(),
                 "Assalamu alaikum " + imam.getFullName() + ",\n\n"
                         + (welcome ? "An account was created for you to manage nikah records for " + masjid.getName() + "."
                                    : "A new temporary password was issued for your Masjidly account.")

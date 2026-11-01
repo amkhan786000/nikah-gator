@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { errorMessage } from '../../../core/auth.service';
 import { LETTERS_API, Letter, LetterType, todayIso } from './letter.model';
+import { SendEmail } from '../../../shared/send-email';
 
 /** Create, edit, void, download and print one letter. The type pre-fills the wording; the imam edits the final text. */
 @Component({
   selector: 'app-letter-editor',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, SendEmail],
   template: `
     <div class="page-title-box d-flex flex-wrap align-items-center justify-content-between">
       <h4 class="page-title">{{ !id ? 'New letter' : letter()?.letterNumber || 'Letter' }}
@@ -72,6 +73,7 @@ import { LETTERS_API, Letter, LetterType, todayIso } from './letter.model';
           <button type="button" class="btn btn-secondary btn-responsive" (click)="pdf(false)" [disabled]="busy()"><i class="mdi mdi-file-pdf"></i> Download PDF</button>
           <button type="button" class="btn btn-secondary btn-responsive" (click)="pdf(true)" [disabled]="busy()"><i class="mdi mdi-printer"></i> Print</button>
           @if (!readonly()) {
+            <app-send-email [url]="emailUrl()" noun="this letter (as last saved)" />
             <button type="button" class="btn btn-outline-danger btn-responsive" (click)="voiding.set(true)">Void letter</button>
           }
         }
@@ -122,6 +124,7 @@ export class LetterEditor {
   }
 
   readonly = () => this.letter()?.status === 'VOID';
+  emailUrl = () => `${LETTERS_API}/${this.id}/email`;
 
   private load(l: Letter) {
     this.letter.set(l);

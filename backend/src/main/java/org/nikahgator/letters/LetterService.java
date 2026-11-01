@@ -24,7 +24,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 /** Letters of the imam's own masjid. Every query is scoped by masjid id; another masjid's letter is a 404. */
 @Service
-public class LetterService {
+public class LetterService implements org.nikahgator.mail.DocumentSource {
     private static final DateTimeFormatter LONG_DATE = DateTimeFormatter.ofPattern("MMMM d, yyyy", Locale.US);
 
     private final LetterRepository letters;
@@ -123,6 +123,21 @@ public class LetterService {
                 LetterTemplates.render(phone, v), t.getAccentColor(), t.getPaperSize(), logoBytes(m.getId()));
         byte[] bytes = LetterPdf.render(l, head);
         return new Pdf(l.getLetterNumber() + ".pdf", bytes);
+    }
+
+    @Override
+    public java.util.Set<String> documentTypes() {
+        return java.util.Set.of("letters");
+    }
+
+    @Override
+    public Doc load(AppUser imam, String type, Long id) {
+        Letter l = find(imam, id);
+        if (!Letter.ISSUED.equals(l.getStatus())) {
+            throw new ApiException(HttpStatus.CONFLICT, "This letter is void and cannot be e-mailed.");
+        }
+        Pdf pdf = pdf(imam, id);
+        return new Doc(l.getMasjidId(), "Letter", l.getLetterNumber(), pdf.filename(), pdf.bytes(), false);
     }
 
     // ---- helpers ----

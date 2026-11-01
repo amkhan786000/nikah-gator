@@ -28,6 +28,15 @@ class ServiceGuardTest {
     }
 
     @Test
+    void sendingADocumentByEmailIsAChangeSoViewOnlyStaffAreRefused() {
+        var view = Map.of(ServiceKey.JUMA_LETTER, AccessLevel.VIEW);
+        var manage = Map.of(ServiceKey.JUMA_LETTER, AccessLevel.MANAGE);
+        assertEquals("VIEW_ONLY", ServiceGuard.refusal(AppUser.STAFF, "POST", "/api/imam/svc/juma/3/email", view));
+        assertNull(ServiceGuard.refusal(AppUser.STAFF, "POST", "/api/imam/svc/juma/3/email", manage));
+        assertEquals("VIEW_ONLY", ServiceGuard.refusal(AppUser.STAFF, "POST", "/api/imam/nikahs/3/certificate/email", VIEW_NIKAH));
+    }
+
+    @Test
     void ungrantedOrDisabledServicesAreRefused() {
         assertEquals("SERVICE_DISABLED", ServiceGuard.refusal(AppUser.STAFF, "GET", "/api/imam/svc/juma", MANAGE_NIKAH));
         assertEquals("SERVICE_DISABLED", ServiceGuard.refusal(AppUser.IMAM, "GET", "/api/imam/svc/juma", Map.of()));

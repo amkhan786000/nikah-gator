@@ -3,6 +3,7 @@ import { DatePipe } from '@angular/common';
 import { Component, effect, inject, input, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { errorMessage } from '../core/auth.service';
+import { SendEmail } from '../shared/send-email';
 
 interface Certificate {
   id: number;
@@ -38,7 +39,7 @@ interface Content {
  */
 @Component({
   selector: 'app-nikah-certificate',
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule, DatePipe, SendEmail],
   template: `
     <div class="card no-print"><div class="card-body">
       <span class="card-header-title">Certificate</span>
@@ -74,6 +75,7 @@ interface Content {
         <div class="d-flex flex-wrap mt-3" style="gap:.4rem">
           <button class="btn btn-primary btn-responsive" (click)="download()" [disabled]="busy()"><i class="mdi mdi-file-pdf"></i> Download PDF</button>
           <button class="btn btn-secondary btn-responsive" (click)="print()"><i class="mdi mdi-printer"></i> Print</button>
+          <app-send-email [url]="emailUrl" noun="the nikah certificate" />
           <button class="btn btn-secondary btn-responsive" (click)="voiding.set(!voiding())"><i class="mdi mdi-cancel"></i> Void certificate</button>
         </div>
         @if (voiding()) {
@@ -132,6 +134,10 @@ export class NikahCertificate {
   voiding = signal(false);
   error = signal('');
   reason = '';
+
+  get emailUrl() {
+    return `${this.url}/email`;
+  }
 
   private get url() {
     return `/api/imam/nikahs/${this.nikahId()}/certificate`;

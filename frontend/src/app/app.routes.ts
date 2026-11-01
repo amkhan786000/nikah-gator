@@ -29,6 +29,17 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/team/staff-form').then((m) => m.StaffForm),
       },
       {
+        path: 'imam/email-log',
+        canActivate: [imamOnlyGuard],
+        loadComponent: () => import('./pages/email-log').then((m) => m.EmailLogPage),
+      },
+      {
+        path: 'admin/email-log',
+        canActivate: [roleGuard('PLATFORM_ADMIN')],
+        data: { admin: true },
+        loadComponent: () => import('./pages/email-log').then((m) => m.EmailLogPage),
+      },
+      {
         path: 'admin/masjids',
         canActivate: [roleGuard('PLATFORM_ADMIN')],
         loadComponent: () => import('./pages/admin-masjids').then((m) => m.AdminMasjids),

@@ -25,7 +25,7 @@ import org.springframework.transaction.support.TransactionTemplate;
  * a record of another masjid (or another service) is a 404.
  */
 @Service
-public class LifeEventService {
+public class LifeEventService implements org.nikahgator.mail.DocumentSource {
     private final LifeEventRepository repo;
     private final MasjidRepository masjids;
     private final AppUserRepository users;
@@ -102,6 +102,23 @@ public class LifeEventService {
         if (e.getImamName() == null) e.setImamName(users.findById(e.getCreatedBy()).map(AppUser::getFullName).orElse(imam.getFullName()));
         byte[] bytes = LifeEventPdf.render(e, lh, logoBytes(masjidId), t.isBismillahEnabled() ? arabicFont() : null, LocalDate.now());
         return new Pdf(e.getCertNumber() + ".pdf", bytes);
+    }
+
+    @Override
+    public java.util.Set<String> documentTypes() {
+        return java.util.Set.of("janazah", "shahada", "baby-naming");
+    }
+
+    @Override
+    public Doc load(AppUser imam, String slug, Long id) {
+        LifeEventType type = LifeEventType.bySlug(slug).orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Unknown service"));
+        LifeEvent e = find(imam, type, id);
+        if (!LifeEvent.VALID.equals(e.getStatus())) {
+            throw new ApiException(HttpStatus.CONFLICT, "This record is void and cannot be e-mailed.");
+        }
+        Pdf pdf = pdf(imam, type, id);
+        // a shahada is a private matter: the screen asks the imam to confirm before sending
+        return new Doc(e.getMasjidId(), type.title(), e.getCertNumber(), pdf.filename(), pdf.bytes(), type == LifeEventType.SHAHADA);
     }
 
     // ---- helpers ----
